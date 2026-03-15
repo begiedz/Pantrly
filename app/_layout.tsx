@@ -1,11 +1,17 @@
 import '@/global.css';
 
 import { ThemeProvider } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PortalHost } from '@rn-primitives/portal';
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Settings } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { Pressable } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import pantry from '@/app/pantry';
+import scanner from '@/app/scanner';
+import settings from '@/app/settings';
+import { Icon } from '@/components/ui/icon';
 import { NAV_THEME } from '@/lib/theme';
 
 export {
@@ -15,18 +21,43 @@ export {
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
+  const Stack = createNativeStackNavigator();
 
   return (
     <SafeAreaProvider>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Stack>
-          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Navigator>
           <Stack.Screen
-            name='scanner'
+            name='Pantry'
+            component={pantry}
+            options={({ navigation }) => ({
+              title: 'Pantrly',
+              headerLargeTitleEnabled: true,
+              headerSearchBarOptions: {
+                placeholder: 'Search products',
+              },
+              headerRight: () => (
+                <Pressable
+                  className='ml-2'
+                  onPress={() => navigation.navigate('Settings')}
+                >
+                  <Icon as={Settings} size={20} />
+                </Pressable>
+              ),
+            })}
+          />
+          <Stack.Screen
+            name='Settings'
+            component={settings}
+            options={{ headerShown: true }}
+          />
+          <Stack.Screen
+            name='Scanner'
+            component={scanner}
             options={{ presentation: 'modal', title: 'Scanner' }}
           />
-        </Stack>
+        </Stack.Navigator>
         <PortalHost />
       </ThemeProvider>
     </SafeAreaProvider>
