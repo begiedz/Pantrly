@@ -5,6 +5,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NAV_THEME } from '@/lib/theme';
 
 export {
@@ -16,10 +17,18 @@ export default function RootLayout() {
   const { colorScheme } = useColorScheme();
 
   return (
-    <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack />
-      <PortalHost />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <Stack>
+          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+          <Stack.Screen
+            name='scanner'
+            options={{ presentation: 'modal', title: 'Scanner' }}
+          />
+        </Stack>
+        <PortalHost />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
