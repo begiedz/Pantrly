@@ -9,7 +9,7 @@ export default function NotFoundScreen() {
       <View className='items-center'>
         <Text>This screen doesn't exist.</Text>
 
-        <Link href='./(tabs)/index'>
+        <Link href='./index'>
           <Text className='text-blue-500 underline'>Go to home screen!</Text>
         </Link>
       </View>

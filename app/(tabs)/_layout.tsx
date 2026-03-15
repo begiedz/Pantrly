@@ -1,27 +1,16 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
+import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue' }}>
-      <Tabs.Screen
-        name='index'
-        options={{
-          title: 'Pantry',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name='home' color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name='settings'
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name='cog' color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <NativeTabs>
+      <NativeTabs.Trigger name='pantry'>
+        <Label>Pantry</Label>
+        <Icon sf='house.fill' drawable='custom_android_drawable' />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name='settings'>
+        <Icon sf='gear' drawable='custom_settings_drawable' />
+        <Label>Settings</Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
