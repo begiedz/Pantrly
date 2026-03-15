@@ -6,7 +6,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { StatusBar } from 'expo-status-bar';
 import { ScanLine, Settings } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import pantry from '@/app/pantry';
 import scanner from '@/app/scanner';
@@ -38,7 +38,7 @@ export default function RootLayout() {
                 placeholder: 'Search products',
               },
               headerRight: () => (
-                <View className='flex-row'>
+                <>
                   <Pressable
                     onPress={() => navigation.navigate('Scanner')}
                     hitSlop={8}
@@ -54,7 +54,7 @@ export default function RootLayout() {
                   >
                     <Icon as={Settings} size={20} />
                   </Pressable>
-                </View>
+                </>
               ),
             })}
           />
