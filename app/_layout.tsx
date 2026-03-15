@@ -4,9 +4,9 @@ import { ThemeProvider } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PortalHost } from '@rn-primitives/portal';
 import { StatusBar } from 'expo-status-bar';
-import { Settings } from 'lucide-react-native';
+import { ScanLine, Settings } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import pantry from '@/app/pantry';
 import scanner from '@/app/scanner';
@@ -32,18 +32,29 @@ export default function RootLayout() {
             name='Pantry'
             component={pantry}
             options={({ navigation }) => ({
-              title: 'Pantrly',
+              title: 'Pantry',
               headerLargeTitleEnabled: true,
               headerSearchBarOptions: {
                 placeholder: 'Search products',
               },
               headerRight: () => (
-                <Pressable
-                  className='ml-2'
-                  onPress={() => navigation.navigate('Settings')}
-                >
-                  <Icon as={Settings} size={20} />
-                </Pressable>
+                <View className='flex-row'>
+                  <Pressable
+                    onPress={() => navigation.navigate('Scanner')}
+                    hitSlop={8}
+                    className='mx-3'
+                  >
+                    <Icon as={ScanLine} size={20} />
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => navigation.navigate('Settings')}
+                    hitSlop={8}
+                    className='mx-3'
+                  >
+                    <Icon as={Settings} size={20} />
+                  </Pressable>
+                </View>
               ),
             })}
           />
