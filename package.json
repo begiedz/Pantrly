@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-native-vector-icons/material-design-icons": "^12.4.3",
     "@react-navigation/native": "^7.0.0",
+    "@react-navigation/stack": "^7.8.5",
     "class-variance-authority": "^0.7.1",
     "expo": "~54.0.29",
     "expo-camera": "~17.0.10",
