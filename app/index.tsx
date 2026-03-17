@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { FlatList, Text, View } from 'react-native';
 import Card from '@/components/card';
+import Screen from '@/components/screen';
 
 const DATA = [
   { id: '1', title: 'Item 1' },
@@ -48,14 +49,16 @@ const Welcome = () => (
 
 export default function PantryScreen() {
   return (
-    <FlatList
-      contentInsetAdjustmentBehavior='automatic'
-      contentContainerStyle={{ margin: 16 }}
-      data={DATA}
-      renderItem={({ item }) => <Card item={item} />}
-      keyExtractor={(item) => item.id}
-      ItemSeparatorComponent={Separator}
-      ListEmptyComponent={Welcome}
-    />
+    <Screen>
+      <FlatList
+        contentInsetAdjustmentBehavior='automatic'
+        contentContainerStyle={{ margin: 16 }}
+        data={DATA}
+        renderItem={({ item }) => <Card item={item} />}
+        keyExtractor={(item) => item.id}
+        ItemSeparatorComponent={Separator}
+        ListEmptyComponent={Welcome}
+      />
+    </Screen>
   );
 }

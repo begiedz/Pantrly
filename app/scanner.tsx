@@ -5,6 +5,7 @@ import {
 } from 'expo-camera';
 import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
+import Screen from '@/components/screen';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -25,7 +26,7 @@ export default function Scanner() {
 
   if (!permission) {
     return (
-      <View
+      <Screen
         style={{
           flex: 1,
           alignItems: 'center',
@@ -34,7 +35,7 @@ export default function Scanner() {
         }}
       >
         <Text>Loading camera permission...</Text>
-      </View>
+      </Screen>
     );
   }
 

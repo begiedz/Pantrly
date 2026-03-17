@@ -1,11 +1,14 @@
+import { useColorScheme } from 'react-native';
+import 'react-native-gesture-handler';
+
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import {
-  MD3LightTheme as DefaultTheme,
   IconButton,
+  MD3DarkTheme,
+  MD3LightTheme,
   PaperProvider,
 } from 'react-native-paper';
-
-import 'react-native-gesture-handler';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import PantryScreen from '@/app/index';
 import ScannerScreen from '@/app/scanner';
@@ -21,8 +24,17 @@ export {
 const Stack = createNativeStackNavigator();
 
 export default function RootLayout() {
+  const scheme = useColorScheme();
+  const theme =
+    scheme === 'dark'
+      ? {
+          ...MD3DarkTheme,
+          mode: 'adaptive' as const,
+        }
+      : MD3LightTheme;
+
   return (
-    <PaperProvider theme={DefaultTheme}>
+    <PaperProvider theme={theme}>
       <Stack.Navigator
         initialRouteName='Pantry'
         screenOptions={{

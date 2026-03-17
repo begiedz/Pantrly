@@ -5,7 +5,7 @@ const LeftContent = (props: AvatarIconProps) => (
 );
 
 const MyComponent = ({ item }: any) => (
-  <Card>
+  <Card mode='contained'>
     <Card.Title
       title={item.title}
       subtitle={`${item.id} item subtitle`}
