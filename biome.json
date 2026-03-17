@@ -15,15 +15,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "suspicious": {
-        "noUnknownAtRules": {
-          "level": "error",
-          "options": {
-            "ignore": ["tailwind", "apply", "layer"]
-          }
-        }
-      }
+      "recommended": true
     }
   },
   "javascript": {
