@@ -1,20 +1,18 @@
 import Constants from 'expo-constants';
 import { Link } from 'expo-router';
-import { ScrollView, View } from 'react-native';
+import { Button, ScrollView, Text, View } from 'react-native';
 import Logo from '@/components/logo';
-import ThemeToggle from '@/components/ThemeToggle';
-import { Text } from '@/components/ui/text';
 
 export default function SettingsScreen() {
   const isDev = __DEV__;
 
   const version = isDev ? 'dev' : (Constants.expoConfig?.version ?? 'unknown');
   return (
-    <ScrollView contentInsetAdjustmentBehavior='automatic' className='flex-1'>
-      <View className='p-4 gap-6'>
+    <ScrollView contentInsetAdjustmentBehavior='automatic'>
+      <View>
         <View className='rounded-2xl border border-border bg-card p-2 flex-1 flex-row items-center justify-between'>
           <Text>Toggle theme</Text>
-          <ThemeToggle />
+          <Button title='Switch theme' />
         </View>
 
         <View className='p-2 flex-1 items-center justify-center '>

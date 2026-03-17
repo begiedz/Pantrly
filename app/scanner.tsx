@@ -4,8 +4,7 @@ import {
   useCameraPermissions,
 } from 'expo-camera';
 import { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -49,15 +48,10 @@ export default function Scanner() {
           paddingHorizontal: 24,
         }}
       >
-        <Text className='mb-4 text-center'>
-          We need camera permission to scan barcodes.
-        </Text>
+        <Text>We need camera permission to scan barcodes.</Text>
 
-        <Pressable
-          onPress={requestPermission}
-          className='rounded-xl bg-black px-4 py-3 dark:bg-white'
-        >
-          <Text className='text-white dark:text-black'>Grant permission</Text>
+        <Pressable onPress={requestPermission}>
+          <Text>Grant permission</Text>
         </Pressable>
       </View>
     );
@@ -92,11 +86,8 @@ export default function Scanner() {
             alignItems: 'center',
           }}
         >
-          <Pressable
-            onPress={() => setScanned(false)}
-            className='rounded-xl bg-black/80 px-4 py-3'
-          >
-            <Text className='text-white'>Scan again</Text>
+          <Pressable onPress={() => setScanned(false)}>
+            <Text>Scan again</Text>
           </Pressable>
         </View>
       )}

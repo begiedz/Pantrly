@@ -1,18 +1,14 @@
-import '@/global.css';
-
-import { ThemeProvider } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { PortalHost } from '@rn-primitives/portal';
-import { StatusBar } from 'expo-status-bar';
-import { ScanLine, Settings } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
-import { Pressable } from 'react-native';
+
+import { Pressable, Text } from 'react-native';
+import {
+  MD3LightTheme as DefaultTheme,
+  PaperProvider,
+} from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import pantry from '@/app/pantry';
 import scanner from '@/app/scanner';
 import settings from '@/app/settings';
-import { Icon } from '@/components/ui/icon';
-import { NAV_THEME } from '@/lib/theme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -20,13 +16,11 @@ export {
 } from 'expo-router';
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
   const Stack = createNativeStackNavigator();
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+    <PaperProvider theme={DefaultTheme}>
+      <SafeAreaProvider>
         <Stack.Navigator>
           <Stack.Screen
             name='Pantry'
@@ -42,17 +36,15 @@ export default function RootLayout() {
                   <Pressable
                     onPress={() => navigation.navigate('Scanner')}
                     hitSlop={8}
-                    className='mx-3'
                   >
-                    <Icon as={ScanLine} size={20} />
+                    <Text>Scan</Text>
                   </Pressable>
 
                   <Pressable
                     onPress={() => navigation.navigate('Settings')}
                     hitSlop={8}
-                    className='mx-3'
                   >
-                    <Icon as={Settings} size={20} />
+                    <Text>Settings</Text>
                   </Pressable>
                 </>
               ),
@@ -69,8 +61,7 @@ export default function RootLayout() {
             options={{ presentation: 'modal', title: 'Scanner' }}
           />
         </Stack.Navigator>
-        <PortalHost />
-      </ThemeProvider>
-    </SafeAreaProvider>
+      </SafeAreaProvider>
+    </PaperProvider>
   );
 }

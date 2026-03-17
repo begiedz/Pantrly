@@ -1,14 +1,5 @@
 import { Link } from 'expo-router';
-import { FlatList, View } from 'react-native';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
+import { FlatList, Text, View } from 'react-native';
 
 const DATA = [
   { id: '1', title: 'Item 1' },
@@ -40,17 +31,15 @@ const DATA = [
 const Separator = () => <View className='mb-4' />;
 
 const Welcome = () => (
-  <View className='flex-1 items-center justify-center gap-8 p-4'>
-    <Text className='rounded bg-lime-500 p-4 text-6xl'>Ply</Text>
+  <View>
+    <Text>Ply</Text>
 
-    <View className='items-center gap-2 p-4'>
-      <Text className='text-xl'>Welcome to Pantrly!</Text>
+    <View>
+      <Text>Welcome to Pantrly!</Text>
       <Text>Your current pantry is empty.</Text>
 
       <Link href='/scanner'>
-        <Text className='text-blue-500'>
-          Let&apos;s start by scanning some items!
-        </Text>
+        <Text>Let&apos;s start by scanning some items!</Text>
       </Link>
     </View>
   </View>
@@ -63,18 +52,18 @@ export default function PantryScreen() {
       contentContainerStyle={{ padding: 16 }}
       data={DATA}
       renderItem={({ item }) => (
-        <Card>
-          <CardHeader>
-            <CardTitle>{item.title}</CardTitle>
-            <CardDescription>{item.id}</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <View>
+          <View>
+            <Text>{item.title}</Text>
+            <Text>{item.id}</Text>
+          </View>
+          <View>
             <Text>Card Content</Text>
-          </CardContent>
-          <CardFooter>
+          </View>
+          <View>
             <Text>Card Footer</Text>
-          </CardFooter>
-        </Card>
+          </View>
+        </View>
       )}
       keyExtractor={(item) => item.id}
       ItemSeparatorComponent={Separator}
