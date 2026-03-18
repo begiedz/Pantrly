@@ -1,37 +1,24 @@
-import { router, Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
-import { IconButton, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { Tabs } from 'expo-router';
+import { Icon } from 'react-native-paper';
 
 import Header from '@/components/header';
+import TabBar from '@/components/tabBar';
 
 export default function TabsLayout() {
-  const scheme = useColorScheme();
-
-  const theme =
-    scheme === 'dark'
-      ? {
-          ...MD3DarkTheme,
-          mode: 'adaptive' as const,
-        }
-      : MD3LightTheme;
-
   return (
     <Tabs
       screenOptions={{
-        header: (props) => <Header {...props} paperTheme={theme} />,
+        header: (props) => <Header {...props} />,
       }}
+      tabBar={(props) => <TabBar {...props} />}
     >
       <Tabs.Screen
         name='index'
         options={{
           title: 'Pantry',
           tabBarLabel: 'Pantry',
-          headerRight: () => (
-            <IconButton
-              icon='barcode-scan'
-              iconColor={theme.colors.onSurface}
-              onPress={() => router.push('/scanner')}
-            />
+          tabBarIcon: ({ color, size }) => (
+            <Icon source='fridge-outline' color={color} size={size} />
           ),
         }}
       />
@@ -41,6 +28,9 @@ export default function TabsLayout() {
         options={{
           title: 'Settings',
           tabBarLabel: 'Settings',
+          tabBarIcon: ({ color, size }) => (
+            <Icon source='cog-outline' color={color} size={size} />
+          ),
         }}
       />
     </Tabs>

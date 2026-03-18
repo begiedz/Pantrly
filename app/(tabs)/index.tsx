@@ -1,5 +1,6 @@
-import { Link } from 'expo-router';
-import { FlatList, Text, View } from 'react-native';
+import { Link, router } from 'expo-router';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FAB } from 'react-native-paper';
 import Card from '@/components/card';
 import Screen from '@/components/screen';
 
@@ -59,6 +60,20 @@ export default function PantryScreen() {
         ItemSeparatorComponent={Separator}
         ListEmptyComponent={Welcome}
       />
+      <FAB
+        icon='barcode-scan'
+        onPress={() => router.push('/scanner')}
+        style={styles.fab}
+      />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+  },
+});

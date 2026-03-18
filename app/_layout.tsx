@@ -19,14 +19,14 @@ export default function RootLayout() {
           options={{
             title: 'Scanner',
             presentation: 'modal',
-            header: (props) => <Header {...props} paperTheme={theme} />,
+            header: (props) => <Header {...props} />,
           }}
         />
         <Stack.Screen
           name='+not-found'
           options={{
             title: 'Oops!',
-            header: (props) => <Header {...props} paperTheme={theme} />,
+            header: (props) => <Header {...props} />,
           }}
         />
       </Stack>
