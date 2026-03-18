@@ -1,33 +1,42 @@
+import type { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
 import { getHeaderTitle } from '@react-navigation/elements';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { StyleSheet, View } from 'react-native';
-import { Appbar, Text, useTheme } from 'react-native-paper';
+import type { MD3Theme } from 'react-native-paper';
+import { Appbar, Text } from 'react-native-paper';
 
-export default function Navbar({
+type HeaderProps = (NativeStackHeaderProps | BottomTabHeaderProps) & {
+  paperTheme: MD3Theme;
+  back?: NativeStackHeaderProps['back'];
+};
+
+export default function Header({
   navigation,
   route,
   options,
   back,
-}: NativeStackHeaderProps) {
+  paperTheme,
+}: HeaderProps) {
   const title = getHeaderTitle(options, route.name);
-  const theme = useTheme();
 
-  const headerRight = options.headerRight
-    ? options.headerRight({ tintColor: undefined })
-    : null;
+  const headerRight = options.headerRight?.({
+    tintColor: paperTheme.colors.onSurface,
+    canGoBack: !!back,
+  });
 
   return (
-    <Appbar.Header
-      style={{
-        backgroundColor: theme.colors.elevation.level3,
-      }}
-    >
+    <Appbar.Header elevated>
       <View style={styles.side}>
-        {back ? <Appbar.BackAction onPress={navigation.goBack} /> : null}
+        {back ? (
+          <Appbar.BackAction onPress={() => navigation.goBack()} />
+        ) : null}
       </View>
 
       <View style={styles.center}>
-        <Text variant='titleLarge' style={styles.title}>
+        <Text
+          variant='titleLarge'
+          style={[styles.title, { color: paperTheme.colors.onSurface }]}
+        >
           {title}
         </Text>
       </View>
