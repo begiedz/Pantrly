@@ -5,7 +5,10 @@ import {
 } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
+import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
+import { baseUrl, fields } from '@/settings';
+import { capitalize } from '@/utils';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -17,18 +20,33 @@ export default function Scanner() {
     setScanned(false);
   };
 
-  const handleBarcodeScanned = (result: BarcodeScanningResult) => {
+  const handleBarcodeScanned = async (result: BarcodeScanningResult) => {
     if (scanLockRef.current) return;
 
     scanLockRef.current = true;
     setScanned(true);
 
-    Alert.alert('Scanned', `Type: ${result.type}\nData: ${result.data}`, [
-      {
-        text: 'Scan again',
-        onPress: resetScanner,
-      },
-    ]);
+    const response = await getProductByBarcode(baseUrl, result.data, fields);
+
+    console.log(`Scan Successful\nType: ${result.type}\nData: ${result.data}`);
+    console.log(JSON.stringify(response, null, 2));
+
+    if (response.product && response.status === 1) {
+      Alert.alert(
+        'Scan successful!',
+        `${capitalize(response.product.brands_tags[0])}\n${response.product.product_name}`,
+        [
+          {
+            text: 'Scan again',
+            onPress: resetScanner,
+          },
+          {
+            text: 'Add to Pantrly',
+            isPreferred: true,
+          },
+        ],
+      );
+    }
   };
 
   if (!permission) {
@@ -83,22 +101,6 @@ export default function Scanner() {
           ],
         }}
       />
-
-      {scanned && (
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 40,
-            alignItems: 'center',
-          }}
-        >
-          <Pressable onPress={resetScanner}>
-            <Text>Scan again</Text>
-          </Pressable>
-        </View>
-      )}
     </View>
   );
 }
