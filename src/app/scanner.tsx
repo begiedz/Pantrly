@@ -7,7 +7,7 @@ import { useRef } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
-import { baseUrl, fields } from '@/settings';
+import { baseUrl, fields } from '@/config';
 import { capitalize } from '@/utils';
 
 export default function Scanner() {
