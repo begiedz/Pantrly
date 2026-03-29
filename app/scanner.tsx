@@ -3,7 +3,7 @@ import {
   CameraView,
   useCameraPermissions,
 } from 'expo-camera';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
@@ -12,19 +12,16 @@ import { capitalize } from '@/utils';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
-  const [scanned, setScanned] = useState(false);
   const scanLockRef = useRef(false);
 
   const resetScanner = () => {
     scanLockRef.current = false;
-    setScanned(false);
   };
 
   const handleBarcodeScanned = async (result: BarcodeScanningResult) => {
     if (scanLockRef.current) return;
 
     scanLockRef.current = true;
-    setScanned(true);
 
     const response = await getProductByBarcode(baseUrl, result.data, fields);
 
@@ -88,7 +85,7 @@ export default function Scanner() {
       <CameraView
         style={{ flex: 1 }}
         facing="back"
-        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+        onBarcodeScanned={handleBarcodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [
             'ean13',
