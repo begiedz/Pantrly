@@ -1,6 +1,6 @@
 import { createStore } from '@tanstack/react-store';
-import type { PantryStoreState } from '@/types';
+import type { PantryStore } from '@/types';
 
-export const appStore = createStore<PantryStoreState>({
+export const pantryStore = createStore<PantryStore>({
   products: [],
 });

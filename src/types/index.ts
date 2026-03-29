@@ -3,7 +3,6 @@ export type ApiProductResponse = {
   status: number;
   product?: {
     product_name: string;
-    product_name_pl: string;
     brands_tags: string[];
     categories_tags: string[];
     image_front_url: string;
@@ -16,11 +15,11 @@ export type ProductEntity = {
   barcode?: string;
   name?: string;
   description?: string;
-  brands?: string[];
+  brand?: string;
   categories?: string[];
   imageUrl?: string;
 };
 
-export type PantryStoreState = {
+export type PantryStore = {
   products: ProductEntity[];
 };
