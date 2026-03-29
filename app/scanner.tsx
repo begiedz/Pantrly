@@ -3,23 +3,30 @@ import {
   CameraView,
   useCameraPermissions,
 } from 'expo-camera';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import Screen from '@/components/screen';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const scanLockRef = useRef(false);
+
+  const resetScanner = () => {
+    scanLockRef.current = false;
+    setScanned(false);
+  };
 
   const handleBarcodeScanned = (result: BarcodeScanningResult) => {
-    if (scanned) return;
+    if (scanLockRef.current) return;
 
+    scanLockRef.current = true;
     setScanned(true);
 
     Alert.alert('Scanned', `Type: ${result.type}\nData: ${result.data}`, [
       {
         text: 'Scan again',
-        onPress: () => setScanned(false),
+        onPress: resetScanner,
       },
     ]);
   };
@@ -62,7 +69,7 @@ export default function Scanner() {
     <View style={{ flex: 1 }}>
       <CameraView
         style={{ flex: 1 }}
-        facing='back'
+        facing="back"
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [
@@ -87,7 +94,7 @@ export default function Scanner() {
             alignItems: 'center',
           }}
         >
-          <Pressable onPress={() => setScanned(false)}>
+          <Pressable onPress={resetScanner}>
             <Text>Scan again</Text>
           </Pressable>
         </View>
