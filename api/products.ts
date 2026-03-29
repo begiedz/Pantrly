@@ -1,4 +1,4 @@
-import type { ApiProductResponse } from '@/@types';
+import type { ApiProductResponse } from '@/types';
 
 export async function getProductByBarcode(
   url: string,

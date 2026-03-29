@@ -20,3 +20,7 @@ export type ProductEntity = {
   categories?: string[];
   imageUrl?: string;
 };
+
+export type PantryStoreState = {
+  products: ProductEntity[];
+};
