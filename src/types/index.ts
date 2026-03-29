@@ -14,12 +14,11 @@ export type ProductEntity = {
   id: string;
   barcode?: string;
   name?: string;
-  description?: string;
   brand?: string;
   categories?: string[];
   imageUrl?: string;
 };
 
-export type PantryStore = {
+export type AppStore = {
   products: ProductEntity[];
 };
