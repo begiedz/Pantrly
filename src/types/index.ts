@@ -3,7 +3,7 @@ export type ApiProductResponse = {
   status: number;
   product?: {
     product_name: string;
-    brands_tags: string[];
+    brands: string;
     categories_tags: string[];
     image_front_url: string;
     compared_to_category: string;

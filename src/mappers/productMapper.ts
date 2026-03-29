@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import type { ApiProductResponse, ProductEntity } from '@/types';
 
 export default function mapApiProductToEntity(
@@ -8,10 +9,10 @@ export default function mapApiProductToEntity(
   }
 
   return {
-    id: crypto.randomUUID(),
+    id: Crypto.randomUUID(),
     barcode: response.code,
     name: response.product.product_name,
-    brand: response.product.brands_tags[0],
+    brand: response.product.brands,
     categories: response.product.categories_tags ?? [],
     imageUrl: response.product.image_front_url,
   };
