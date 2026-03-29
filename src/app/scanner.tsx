@@ -3,12 +3,14 @@ import {
   CameraView,
   useCameraPermissions,
 } from 'expo-camera';
+import { router } from 'expo-router';
 import { useRef } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
-import { capitalize } from '@/utils';
+import mapApiProductToEntity from '@/mappers/productMapper';
+import { addProduct } from '@/store/appStore';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -28,21 +30,28 @@ export default function Scanner() {
     console.log(`Scan Successful\nType: ${result.type}\nData: ${result.data}`);
     console.log(JSON.stringify(response, null, 2));
 
-    if (response.product && response.status === 1) {
-      Alert.alert(
-        'Scan successful!',
-        `${capitalize(response.product.brands_tags[0])}\n${response.product.product_name}`,
-        [
-          {
-            text: 'Scan again',
-            onPress: resetScanner,
+    if (response && response.status === 1) {
+      const product = mapApiProductToEntity(response);
+
+      if (!product) {
+        resetScanner();
+        return;
+      }
+
+      Alert.alert('Scan successful!', `${product.name}\n${product.brand}`, [
+        {
+          text: 'Scan again',
+          onPress: resetScanner,
+        },
+        {
+          text: 'Add to Pantrly',
+          onPress: () => {
+            addProduct(product);
+            router.replace('/');
           },
-          {
-            text: 'Add to Pantrly',
-            isPreferred: true,
-          },
-        ],
-      );
+          isPreferred: true,
+        },
+      ]);
     }
   };
 
@@ -84,7 +93,8 @@ export default function Scanner() {
     <View style={{ flex: 1 }}>
       <CameraView
         style={{ flex: 1 }}
-        facing="back"
+        facing='back'
+        selectedLens='builtInWideAngleCamera'
         onBarcodeScanned={handleBarcodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [

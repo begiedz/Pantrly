@@ -1,9 +1,13 @@
 import { Avatar, type AvatarIconProps, Button, Card } from 'react-native-paper';
 import type { ProductEntity } from '@/types';
 
-const LeftContent = ({product, size }: {product:ProductEntity, size?: number }) => (
-  <Avatar.Image source={{uri:product.imageUrl}} size={size} />
-);
+const LeftContent = ({
+  product,
+  size,
+}: {
+  product: ProductEntity;
+  size?: number;
+}) => <Avatar.Image source={{ uri: product.imageUrl }} size={size} />;
 
 type PantryCardProps = {
   product: ProductEntity;
@@ -15,7 +19,7 @@ export default function PantryCard({ product }: PantryCardProps) {
       <Card.Title
         title={product.name}
         subtitle={product.brand}
-        left={({size})=> <LeftContent product={product} size={size}/>}
+        left={({ size }) => <LeftContent product={product} size={size} />}
       />
       {/* <Card.Content>
       <Text variant='titleLarge'>Card title</Text>
