@@ -6,52 +6,87 @@ import {
 import { router } from 'expo-router';
 import { useRef } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
+
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
 import mapApiProductToEntity from '@/mappers/productMapper';
 import { addProduct } from '@/store/appStore';
+import type { ProductEntity } from '@/types';
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
-  const scanLockRef = useRef(false);
+  const isScanningRef = useRef(false);
 
-  const resetScanner = () => {
-    scanLockRef.current = false;
+  const unlockScanner = () => {
+    isScanningRef.current = false;
   };
 
-  const handleBarcodeScanned = async (result: BarcodeScanningResult) => {
-    if (scanLockRef.current) return;
+  const showRequestError = () => {
+    Alert.alert('Request failed', 'Could not fetch product data.', [
+      { text: 'OK', onPress: unlockScanner },
+    ]);
+  };
 
-    scanLockRef.current = true;
+  const showProductNotFound = () => {
+    Alert.alert('Not found', 'No product found for this barcode.', [
+      { text: 'OK', onPress: unlockScanner },
+    ]);
+  };
 
-    const response = await getProductByBarcode(baseUrl, result.data, fields);
+  const showMappedProductError = () => {
+    Alert.alert('Error', 'Could not map product data.', [
+      { text: 'OK', onPress: unlockScanner },
+    ]);
+  };
 
-    console.log(`Scan Successful\nType: ${result.type}\nData: ${result.data}`);
-    console.log(JSON.stringify(response, null, 2));
+  const handleSuccess = (product: ProductEntity) => {
+    Alert.alert('Scan successful!', `${product.name}\n${product.brand}`, [
+      {
+        text: 'Scan again',
+        onPress: unlockScanner,
+      },
+      {
+        text: 'Add to Pantry',
+        isPreferred: true,
+        onPress: () => {
+          addProduct(product);
+          router.replace('/');
+        },
+      },
+    ]);
+  };
 
-    if (response && response.status === 1) {
-      const product = mapApiProductToEntity(response);
+  const handleBarcodeScanned = async ({
+    data,
+    type,
+  }: BarcodeScanningResult) => {
+    if (isScanningRef.current) return;
 
-      if (!product) {
-        resetScanner();
+    isScanningRef.current = true;
+
+    try {
+      const response = await getProductByBarcode(baseUrl, data, fields);
+
+      console.log(`Scan successful\nType: ${type}\nData: ${data}`);
+      console.log(JSON.stringify(response, null, 2));
+
+      if (response?.status !== 1) {
+        showProductNotFound();
         return;
       }
 
-      Alert.alert('Scan successful!', `${product.name}\n${product.brand}`, [
-        {
-          text: 'Scan again',
-          onPress: resetScanner,
-        },
-        {
-          text: 'Add to Pantrly',
-          onPress: () => {
-            addProduct(product);
-            router.replace('/');
-          },
-          isPreferred: true,
-        },
-      ]);
+      const product = mapApiProductToEntity(response);
+
+      if (!product) {
+        showMappedProductError();
+        return;
+      }
+
+      handleSuccess(product);
+    } catch (error) {
+      console.error('Barcode lookup failed:', error);
+      showRequestError();
     }
   };
 
