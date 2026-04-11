@@ -1,38 +1,21 @@
 import { useStore } from '@tanstack/react-store';
 import { Link, router } from 'expo-router';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { FAB } from 'react-native-paper';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { FAB, Text } from 'react-native-paper';
 import Card from '@/components/card';
 import Screen from '@/components/screen';
-import { appStore } from '@/store/appStore';
-
-const Separator = () => <View style={{ height: 16 }} />;
-
-const Welcome = () => (
-  <View>
-    <Text>Ply</Text>
-
-    <View>
-      <Text>Welcome to Pantrly!</Text>
-      <Text>Your current pantry is empty.</Text>
-
-      <Link href='/scanner'>
-        <Text>Let&apos;s start by scanning some items!</Text>
-      </Link>
-    </View>
-  </View>
-);
+import { appStore } from '@/lib/store/appStore';
 
 export default function PantryScreen() {
   const products = useStore(appStore, (state) => state.products);
-console.log('AppStore Products:',products);
+
   return (
     <Screen>
       <FlatList
         contentInsetAdjustmentBehavior='automatic'
-        contentContainerStyle={{ margin: 16 }}
+        contentContainerStyle={{ flexGrow: 1, margin: 16 }}
         data={products}
-        renderItem={({item}) => <Card product={item} />}
+        renderItem={({ item }) => <Card product={item} />}
         keyExtractor={(product) => product.id}
         ItemSeparatorComponent={Separator}
         ListEmptyComponent={Welcome}
@@ -45,6 +28,34 @@ console.log('AppStore Products:',products);
     </Screen>
   );
 }
+
+const Separator = () => <View style={{ height: 16 }} />;
+
+const Welcome = () => (
+  <View
+    style={{
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'center',
+    }}
+  >
+    <Text>Ply</Text>
+
+    <View style={{ alignItems: 'center' }}>
+      <Text>Welcome to Pantrly!</Text>
+      <Text>Your current pantry is empty.</Text>
+
+      <Link
+        href='/scanner'
+        style={{
+          textDecorationLine: 'underline',
+        }}
+      >
+        <Text>Let&apos;s start by scanning some items!</Text>
+      </Link>
+    </View>
+  </View>
+);
 
 const styles = StyleSheet.create({
   fab: {

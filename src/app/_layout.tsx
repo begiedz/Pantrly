@@ -1,7 +1,9 @@
 import { Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
 import Header from '@/components/header';
+import { hydrateProducts } from '@/lib/store/appStore';
 
 export { ErrorBoundary } from 'expo-router';
 export default function RootLayout() {
@@ -10,6 +12,11 @@ export default function RootLayout() {
     scheme === 'dark'
       ? { ...MD3DarkTheme, mode: 'adaptive' as const }
       : MD3LightTheme;
+
+  useEffect(() => {
+    void hydrateProducts();
+  }, []);
+
   return (
     <PaperProvider theme={theme}>
       <Stack>
