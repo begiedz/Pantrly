@@ -1,6 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 import { Link, router } from 'expo-router';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Image, StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import Card from '@/components/card';
 import Screen from '@/components/screen';
@@ -39,16 +39,21 @@ const Welcome = () => (
       justifyContent: 'center',
     }}
   >
-    <Text>Ply</Text>
+    <Image
+      style={{ width: 100, height: 100, marginBottom: 16 }}
+      resizeMode='contain'
+      source={require('@/assets/images/icon.png')}
+    />
 
     <View style={{ alignItems: 'center' }}>
-      <Text>Welcome to Pantrly!</Text>
+      <Text style={{ fontSize: 20, fontWeight: 600 }}>Welcome to Pantrly!</Text>
       <Text>Your current pantry is empty.</Text>
 
       <Link
         href='/scanner'
         style={{
           textDecorationLine: 'underline',
+          marginTop: 16,
         }}
       >
         <Text>Let&apos;s start by scanning some items!</Text>
