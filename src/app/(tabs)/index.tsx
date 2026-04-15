@@ -1,5 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 import { Link, router } from 'expo-router';
+import { useState } from 'react';
 import { FlatList, Image, StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import Card from '@/components/card';
@@ -8,7 +9,10 @@ import { appStore } from '@/lib/store/appStore';
 
 export default function PantryScreen() {
   const products = useStore(appStore, (state) => state.products);
+  const [state, setState] = useState({ open: false });
 
+  const onStateChange = ({ open }: { open: boolean }) => setState({ open });
+  const { open } = state;
   return (
     <Screen>
       <FlatList
@@ -20,10 +24,29 @@ export default function PantryScreen() {
         ItemSeparatorComponent={Separator}
         ListEmptyComponent={Welcome}
       />
-      <FAB
-        icon='barcode-scan'
-        onPress={() => router.push('/scanner')}
-        style={styles.fab}
+      <FAB.Group
+        open={open}
+        visible
+        icon={open ? 'format-list-bulleted' : 'plus'}
+        actions={[
+          { icon: 'pencil', label: 'Manual', onPress: () => {} },
+          {
+            icon: 'numeric',
+            label: 'Barcode',
+            onPress: () => {},
+          },
+          {
+            icon: 'image',
+            label: 'Image',
+            onPress: () => {},
+          },
+          {
+            icon: 'barcode-scan',
+            label: 'Scan',
+            onPress: () => router.push('/scanner'),
+          },
+        ]}
+        onStateChange={onStateChange}
       />
     </Screen>
   );
@@ -61,12 +84,3 @@ const Welcome = () => (
     </View>
   </View>
 );
-
-const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-  },
-});
