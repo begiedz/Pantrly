@@ -30,6 +30,14 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name='create'
+          options={{
+            title: 'New product',
+            presentation: 'card',
+            header: (props) => <Header {...props} />,
+          }}
+        />
+        <Stack.Screen
           name='+not-found'
           options={{
             title: 'Oops!',

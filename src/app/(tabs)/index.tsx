@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-store';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Image, StyleSheet, View } from 'react-native';
+import { FlatList, Image, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import Card from '@/components/card';
 import Screen from '@/components/screen';
@@ -29,7 +29,11 @@ export default function PantryScreen() {
         visible
         icon={open ? 'format-list-bulleted' : 'plus'}
         actions={[
-          { icon: 'pencil', label: 'Manual', onPress: () => {} },
+          {
+            icon: 'pencil',
+            label: 'Manual',
+            onPress: () => router.push('/create'),
+          },
           {
             icon: 'numeric',
             label: 'Barcode',
