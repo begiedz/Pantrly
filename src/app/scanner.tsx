@@ -10,8 +10,8 @@ import { Alert, Pressable, Text, View } from 'react-native';
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
-import mapApiProductToEntity from '@/mappers/productMapper';
-import { addProduct } from '@/store/appStore';
+import mapApiProductToEntity from '@/lib/mappers/productMapper';
+import { addProduct } from '@/lib/store/appStore';
 import type { ProductEntity } from '@/types';
 
 export default function Scanner() {
