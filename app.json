@@ -32,6 +32,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Pantrly to access your photos so you can attach or scan item images",
+          "cameraPermission": "Allow Pantrly to use your camera to take item photos"
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Allow Pantrly to access your camera",
