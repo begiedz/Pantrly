@@ -7,7 +7,14 @@ import {
 } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { Button } from 'react-native-paper';
 
 import { getProductByBarcode } from '@/api/products';
@@ -142,7 +149,18 @@ export default function Scanner() {
     setIsImporting(true);
 
     try {
-      const uri = await pickImageFromLibrary();
+      if (Platform.OS === 'ios') {
+        Alert.alert(
+          'Limited on iPhone',
+          'Scanning from gallery only supports QR codes on iOS. Product barcodes still need the live camera.',
+        );
+        return;
+      }
+
+      const uri = await pickImageFromLibrary({
+        allowsEditing: false,
+        quality: 1,
+      });
 
       if (!uri) {
         return;
@@ -222,7 +240,6 @@ export default function Scanner() {
         <Pressable onPress={requestPermission}>
           <Text>Grant permission</Text>
         </Pressable>
-
         <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
           Scan from gallery
         </Button>
@@ -242,14 +259,16 @@ export default function Scanner() {
         }}
       />
       <View style={styles.actions}>
-        <Button
-          mode='contained-tonal'
-          icon='image'
-          onPress={handleImportBarcode}
-          loading={isImporting}
-        >
-          Scan from gallery
-        </Button>
+        {Platform.OS !== 'ios' && (
+          <Button
+            mode='contained-tonal'
+            icon='image'
+            onPress={handleImportBarcode}
+            loading={isImporting}
+          >
+            Scan from gallery
+          </Button>
+        )}
       </View>
     </View>
   );

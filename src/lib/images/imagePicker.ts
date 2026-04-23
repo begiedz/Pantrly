@@ -7,16 +7,23 @@ const DEFAULT_IMAGE_OPTIONS = {
   quality: 0.8,
 };
 
-export async function pickImageFromLibrary() {
+type PickImageOptions = {
+  allowsEditing?: boolean;
+  aspect?: [number, number];
+  quality?: number;
+};
+
+export async function pickImageFromLibrary(options?: PickImageOptions) {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
   if (!permission.granted) {
     throw new Error('PHOTO_PERMISSION_DENIED');
   }
 
-  const result = await ImagePicker.launchImageLibraryAsync(
-    DEFAULT_IMAGE_OPTIONS,
-  );
+  const result = await ImagePicker.launchImageLibraryAsync({
+    ...DEFAULT_IMAGE_OPTIONS,
+    ...options,
+  });
 
   if (result.canceled) {
     return;
