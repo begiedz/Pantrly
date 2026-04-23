@@ -35,20 +35,6 @@ export default function PantryScreen() {
             onPress: () => router.push('/create'),
           },
           {
-            icon: 'numeric',
-            label: 'Barcode',
-            onPress: () => {},
-          },
-          {
-            icon: 'image',
-            label: 'Image',
-            onPress: () =>
-              router.push({
-                pathname: '/scanner',
-                params: { source: 'gallery' },
-              }),
-          },
-          {
             icon: 'barcode-scan',
             label: 'Scan',
             onPress: () => router.push('/scanner'),

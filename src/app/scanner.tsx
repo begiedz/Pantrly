@@ -5,8 +5,8 @@ import {
   scanFromURLAsync,
   useCameraPermissions,
 } from 'expo-camera';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { router } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -34,11 +34,9 @@ const supportedBarcodeTypes: BarcodeType[] = [
 ];
 
 export default function Scanner() {
-  const params = useLocalSearchParams<{ source?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const [isImporting, setIsImporting] = useState(false);
   const isScanningRef = useRef(false);
-  const hasAutoImportedRef = useRef(false);
 
   const unlockScanner = useCallback(() => {
     isScanningRef.current = false;
@@ -197,15 +195,6 @@ export default function Scanner() {
       setIsImporting(false);
     }
   }, [isImporting, resolveScannedBarcode]);
-
-  useEffect(() => {
-    if (params.source !== 'gallery' || hasAutoImportedRef.current) {
-      return;
-    }
-
-    hasAutoImportedRef.current = true;
-    void handleImportBarcode();
-  }, [handleImportBarcode, params.source]);
 
   if (!permission) {
     return (

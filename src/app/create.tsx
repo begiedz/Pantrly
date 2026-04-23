@@ -14,7 +14,9 @@ import {
 } from 'react-native';
 import { Button, HelperText, Text, TextInput } from 'react-native-paper';
 
+import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
+import { baseUrl, fields } from '@/config';
 import {
   pickImageFromLibrary,
   takeImageWithCamera,
@@ -23,6 +25,7 @@ import {
   copyProductImageToStorage,
   downloadProductImageToStorage,
 } from '@/lib/images/productImages';
+import mapApiProductToEntity from '@/lib/mappers/productMapper';
 import { addProduct } from '@/lib/store/appStore';
 
 export default function CreateScreen() {
@@ -42,6 +45,7 @@ export default function CreateScreen() {
   const [remoteImageUrl, setRemoteImageUrl] = useState(params.imageUrl);
   const [selectedImageUri, setSelectedImageUri] = useState<string>();
   const [bestBefore, setBestBefore] = useState<Date>(initialBestBefore);
+  const [isFetchingProduct, setIsFetchingProduct] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const trimmedBarcode = barcode.trim();
@@ -111,6 +115,40 @@ export default function CreateScreen() {
       }
 
       Alert.alert('Camera failed', 'Could not take a photo.');
+    }
+  };
+
+  const handleFetchByBarcode = async () => {
+    if (!trimmedBarcode) {
+      Alert.alert('Missing barcode', 'Enter a barcode before fetching.');
+      return;
+    }
+
+    setIsFetchingProduct(true);
+
+    try {
+      const response = await getProductByBarcode(
+        baseUrl,
+        trimmedBarcode,
+        fields,
+      );
+      const product = mapApiProductToEntity(response);
+
+      if (!product) {
+        Alert.alert('Not found', 'No product found for this barcode.');
+        return;
+      }
+
+      setName(product.name ?? '');
+      setBrand(product.brand ?? '');
+      setCategories(product.categories?.join(', ') ?? '');
+      setRemoteImageUrl(product.imageUrl);
+      Alert.alert('Product found', 'Filled the item details from barcode.');
+    } catch (error) {
+      console.error('Barcode lookup failed:', error);
+      Alert.alert('Lookup failed', 'Could not fetch product data.');
+    } finally {
+      setIsFetchingProduct(false);
     }
   };
 
@@ -202,17 +240,29 @@ export default function CreateScreen() {
                 onChange={handleDateChange}
               />
             </View>
-            <TextInput
-              mode='outlined'
-              label='Barcode'
-              placeholder='5901234123457'
-              value={barcode}
-              onChangeText={setBarcode}
-              autoCapitalize='none'
-              autoCorrect={false}
-              keyboardType='number-pad'
-              returnKeyType='next'
-            />
+            <View style={styles.barcodeField}>
+              <TextInput
+                mode='outlined'
+                label='Barcode'
+                placeholder='5901234123457'
+                value={barcode}
+                onChangeText={setBarcode}
+                autoCapitalize='none'
+                autoCorrect={false}
+                keyboardType='number-pad'
+                returnKeyType='next'
+                style={styles.barcodeInput}
+              />
+              <Button
+                mode='outlined'
+                icon='database-search-outline'
+                onPress={handleFetchByBarcode}
+                loading={isFetchingProduct}
+                disabled={!trimmedBarcode || isFetchingProduct}
+              >
+                Fill
+              </Button>
+            </View>
 
             <TextInput
               mode='outlined'
@@ -309,6 +359,14 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 8,
+  },
+  barcodeField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barcodeInput: {
+    flex: 1,
   },
   imageField: {
     gap: 12,
