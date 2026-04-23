@@ -19,7 +19,10 @@ import {
   pickImageFromLibrary,
   takeImageWithCamera,
 } from '@/lib/images/imagePicker';
-import { copyProductImageToStorage } from '@/lib/images/productImages';
+import {
+  copyProductImageToStorage,
+  downloadProductImageToStorage,
+} from '@/lib/images/productImages';
 import { addProduct } from '@/lib/store/appStore';
 
 export default function CreateScreen() {
@@ -123,7 +126,9 @@ export default function CreateScreen() {
       const id = Crypto.randomUUID();
       const localImageUri = selectedImageUri
         ? await copyProductImageToStorage(selectedImageUri, id)
-        : undefined;
+        : remoteImageUrl
+          ? await downloadProductImageToStorage(remoteImageUrl, id)
+          : undefined;
 
       addProduct({
         id,
@@ -144,7 +149,12 @@ export default function CreateScreen() {
       router.replace('/');
     } catch (error) {
       console.error('Failed to save pantry item', error);
-      Alert.alert('Save failed', 'Could not save this item.');
+      Alert.alert(
+        'Save failed',
+        isScannedProduct
+          ? 'Could not store this item image for offline use.'
+          : 'Could not save this item.',
+      );
     } finally {
       setIsSaving(false);
     }

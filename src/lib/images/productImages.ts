@@ -45,6 +45,24 @@ export async function copyProductImageToStorage(
   return destinationUri;
 }
 
+export async function downloadProductImageToStorage(
+  sourceUrl: string,
+  productId: string,
+) {
+  const productImagesDirectory = getProductImagesDirectory();
+
+  await FileSystem.makeDirectoryAsync(productImagesDirectory, {
+    intermediates: true,
+  });
+
+  const extension = getImageExtension(sourceUrl);
+  const destinationUri = `${productImagesDirectory}${productId}.${extension}`;
+
+  await FileSystem.downloadAsync(sourceUrl, destinationUri);
+
+  return destinationUri;
+}
+
 export async function deleteProductImagesDirectory() {
   if (!FileSystem.documentDirectory) {
     return;
