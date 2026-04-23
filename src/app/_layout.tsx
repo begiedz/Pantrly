@@ -22,6 +22,13 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen
+          name='product/[id]'
+          options={{
+            title: 'Details',
+            header: (props) => <Header {...props} />,
+          }}
+        />
+        <Stack.Screen
           name='scanner'
           options={{
             title: 'Scanner',

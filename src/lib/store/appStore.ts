@@ -50,3 +50,7 @@ export async function clearProducts() {
     products: [],
   }));
 }
+
+export function getProductById(id: string) {
+  return appStore.state.products.find(p => p.id === id);
+}

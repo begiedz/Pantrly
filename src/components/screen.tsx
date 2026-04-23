@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 type ScreenProps = PropsWithChildren<{
-  style?: object;
+  style?: StyleProp<ViewStyle>;
 }>;
 
 export default function Screen({ children, style }: ScreenProps) {
