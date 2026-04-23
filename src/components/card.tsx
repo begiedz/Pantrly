@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { Avatar, Card, IconButton } from 'react-native-paper';
+import { getProductImageUri } from '@/lib/images/productImages';
 import type { ProductEntity } from '@/types';
 
 type PantryCardProps = {
@@ -7,12 +8,17 @@ type PantryCardProps = {
 };
 
 const LeftContent = ({
-  imageUrl,
+  imageUri,
   size,
 }: {
-  imageUrl?: string;
+  imageUri?: string;
   size?: number;
-}) => <Avatar.Image source={{ uri: imageUrl }} size={size} />;
+}) =>
+  imageUri ? (
+    <Avatar.Image source={{ uri: imageUri }} size={size} />
+  ) : (
+    <Avatar.Icon icon='image-outline' size={size} />
+  );
 
 const RightContent = ({ id }: { id: string }) => {
   return (
@@ -42,7 +48,7 @@ export default function PantryCard({ product }: PantryCardProps) {
         title={title}
         subtitle={subtitle}
         left={({ size }) => (
-          <LeftContent imageUrl={product.imageUrl} size={size} />
+          <LeftContent imageUri={getProductImageUri(product)} size={size} />
         )}
         right={() => <RightContent id={product.id} />}
       />

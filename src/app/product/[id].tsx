@@ -1,7 +1,8 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Image } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Screen from '@/components/screen';
+import { getProductImageUri } from '@/lib/images/productImages';
 import { getProductById } from '@/lib/store/appStore';
 
 export default function ProductDetailsScreen() {
@@ -16,6 +17,7 @@ export default function ProductDetailsScreen() {
   //     Alert.alert('Error', e?.message ?? String(e));
   //   }
   // }, [id]);
+  const imageUri = getProductImageUri(product);
 
   return (
     <>
@@ -25,14 +27,37 @@ export default function ProductDetailsScreen() {
         }}
       />
       <Screen style={{ padding: 16 }}>
-        <Text>{product?.imageUrl}</Text>
-        <Image src={product?.imageUrl} style={{ width: 100, height: 100 }} />
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.image}
+            resizeMode='cover'
+          />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text variant='bodyMedium'>No image</Text>
+          </View>
+        )}
         <Text>{product?.name}</Text>
         <Text>{product?.brand}</Text>
         <Text>{product?.barcode}</Text>
         <Text>{product?.bestBefore}</Text>
-        <Text>{product?.categories}</Text>
+        <Text>{product?.categories?.join(', ')}</Text>
       </Screen>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  image: {
+    width: 160,
+    height: 160,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e5e7eb',
+  },
+});

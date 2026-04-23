@@ -17,6 +17,7 @@ export type ProductEntity = {
   brand?: string;
   categories?: string[];
   imageUrl?: string;
+  localImageUri?: string;
   bestBefore?: string;
 };
 

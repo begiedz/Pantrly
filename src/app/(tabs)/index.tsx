@@ -42,7 +42,11 @@ export default function PantryScreen() {
           {
             icon: 'image',
             label: 'Image',
-            onPress: () => {},
+            onPress: () =>
+              router.push({
+                pathname: '/scanner',
+                params: { source: 'gallery' },
+              }),
           },
           {
             icon: 'barcode-scan',

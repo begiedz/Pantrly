@@ -1,4 +1,5 @@
 import { createStore } from '@tanstack/react-store';
+import { deleteProductImagesDirectory } from '@/lib/images/productImages';
 import {
   clearPantryItems,
   loadPantryItems,
@@ -19,7 +20,7 @@ export async function hydrateProducts() {
 
   const products = await loadPantryItems();
 
-  appStore.setState(state => ({
+  appStore.setState((state) => ({
     ...state,
     products,
   }));
@@ -30,7 +31,7 @@ export async function hydrateProducts() {
 export function addProduct(product: ProductEntity) {
   let nextProducts: ProductEntity[] = [];
 
-  appStore.setState(state => {
+  appStore.setState((state) => {
     nextProducts = [...state.products, product];
 
     return {
@@ -44,13 +45,14 @@ export function addProduct(product: ProductEntity) {
 
 export async function clearProducts() {
   await clearPantryItems();
+  await deleteProductImagesDirectory();
 
-  appStore.setState(state => ({
+  appStore.setState((state) => ({
     ...state,
     products: [],
   }));
 }
 
 export function getProductById(id: string) {
-  return appStore.state.products.find(p => p.id === id);
+  return appStore.state.products.find((p) => p.id === id);
 }

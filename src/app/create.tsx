@@ -2,10 +2,11 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as Crypto from 'expo-crypto';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo, useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
@@ -14,24 +15,40 @@ import {
 import { Button, HelperText, Text, TextInput } from 'react-native-paper';
 
 import Screen from '@/components/screen';
+import {
+  pickImageFromLibrary,
+  takeImageWithCamera,
+} from '@/lib/images/imagePicker';
+import { copyProductImageToStorage } from '@/lib/images/productImages';
 import { addProduct } from '@/lib/store/appStore';
 
 export default function CreateScreen() {
-  const [barcode, setBarcode] = useState('');
-  const [name, setName] = useState('');
-  const [brand, setBrand] = useState('');
-  const [categories, setCategories] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [bestBefore, setBestBefore] = useState<Date>(new Date());
+  const params = useLocalSearchParams<{
+    barcode?: string;
+    name?: string;
+    brand?: string;
+    categories?: string;
+    imageUrl?: string;
+    source?: string;
+  }>();
+  const initialBestBefore = useMemo(() => new Date(), []);
+  const [barcode, setBarcode] = useState(params.barcode ?? '');
+  const [name, setName] = useState(params.name ?? '');
+  const [brand, setBrand] = useState(params.brand ?? '');
+  const [categories, setCategories] = useState(params.categories ?? '');
+  const [remoteImageUrl, setRemoteImageUrl] = useState(params.imageUrl);
+  const [selectedImageUri, setSelectedImageUri] = useState<string>();
+  const [bestBefore, setBestBefore] = useState<Date>(initialBestBefore);
   const [isSaving, setIsSaving] = useState(false);
 
   const trimmedBarcode = barcode.trim();
   const trimmedName = name.trim();
   const trimmedBrand = brand.trim();
   const trimmedCategories = categories.trim();
-  const trimmedImageUrl = imageUrl.trim();
 
   const selectedBestBefore = bestBefore;
+  const previewImageUri = selectedImageUri ?? remoteImageUrl;
+  const isScannedProduct = params.source === 'scan';
 
   const handleDateChange = (
     event: DateTimePickerEvent,
@@ -44,6 +61,56 @@ export default function CreateScreen() {
     setBestBefore(selectedDate);
   };
 
+  const handleChoosePhoto = async () => {
+    try {
+      const uri = await pickImageFromLibrary();
+
+      if (!uri) {
+        return;
+      }
+
+      setSelectedImageUri(uri);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'PHOTO_PERMISSION_DENIED'
+      ) {
+        Alert.alert(
+          'Permission needed',
+          'Allow photo access to attach an image to this item.',
+        );
+        return;
+      }
+
+      Alert.alert('Image failed', 'Could not open the photo library.');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const uri = await takeImageWithCamera();
+
+      if (!uri) {
+        return;
+      }
+
+      setSelectedImageUri(uri);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'CAMERA_PERMISSION_DENIED'
+      ) {
+        Alert.alert(
+          'Permission needed',
+          'Allow camera access to take a product photo.',
+        );
+        return;
+      }
+
+      Alert.alert('Camera failed', 'Could not take a photo.');
+    }
+  };
+
   const handleSave = async () => {
     if (!trimmedName) {
       Alert.alert('Missing name', 'Enter an item name before saving.');
@@ -53,8 +120,13 @@ export default function CreateScreen() {
     setIsSaving(true);
 
     try {
+      const id = Crypto.randomUUID();
+      const localImageUri = selectedImageUri
+        ? await copyProductImageToStorage(selectedImageUri, id)
+        : undefined;
+
       addProduct({
-        id: Crypto.randomUUID(),
+        id,
         barcode: trimmedBarcode || undefined,
         name: trimmedName,
         brand: trimmedBrand || undefined,
@@ -64,11 +136,15 @@ export default function CreateScreen() {
               .map((category) => category.trim())
               .filter(Boolean)
           : undefined,
-        imageUrl: trimmedImageUrl || undefined,
+        imageUrl: remoteImageUrl || undefined,
+        localImageUri,
         bestBefore: bestBefore.toISOString(),
       });
 
       router.replace('/');
+    } catch (error) {
+      console.error('Failed to save pantry item', error);
+      Alert.alert('Save failed', 'Could not save this item.');
     } finally {
       setIsSaving(false);
     }
@@ -82,9 +158,13 @@ export default function CreateScreen() {
           contentContainerStyle={styles.content}
         >
           <View style={styles.header}>
-            <Text variant='headlineMedium'>Add pantry item</Text>
+            <Text variant='headlineMedium'>
+              {isScannedProduct ? 'Review scanned item' : 'Add pantry item'}
+            </Text>
             <Text variant='bodySmall' style={styles.subtleText}>
-              Enter an item information and store its best before date.
+              {isScannedProduct
+                ? 'Check the scanned item details, then set its best before date.'
+                : 'Enter an item information and store its best before date.'}
             </Text>
           </View>
 
@@ -148,17 +228,43 @@ export default function CreateScreen() {
               Separate categories with commas.
             </HelperText>
 
-            {/* <TextInput
-              mode='outlined'
-              label='Image URL'
-              placeholder='https://example.com/item.png'
-              value={imageUrl}
-              onChangeText={setImageUrl}
-              autoCapitalize='none'
-              autoCorrect={false}
-              keyboardType='url'
-              returnKeyType='next'
-            /> */}
+            <View style={styles.imageField}>
+              {previewImageUri ? (
+                <Image
+                  source={{ uri: previewImageUri }}
+                  style={styles.imagePreview}
+                  resizeMode='cover'
+                />
+              ) : (
+                <View style={[styles.imagePreview, styles.imagePlaceholder]}>
+                  <Text variant='bodyMedium'>No image</Text>
+                </View>
+              )}
+
+              <View style={styles.imageActions}>
+                <Button mode='outlined' icon='camera' onPress={handleTakePhoto}>
+                  Take photo
+                </Button>
+                <Button
+                  mode='outlined'
+                  icon='image'
+                  onPress={handleChoosePhoto}
+                >
+                  Choose photo
+                </Button>
+                {previewImageUri ? (
+                  <Button
+                    mode='text'
+                    onPress={() => {
+                      setSelectedImageUri(undefined);
+                      setRemoteImageUrl(undefined);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </View>
+            </View>
           </View>
 
           <View style={styles.actions}>
@@ -192,6 +298,26 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   form: {
+    gap: 8,
+  },
+  imageField: {
+    gap: 12,
+    paddingTop: 8,
+  },
+  imagePreview: {
+    width: 128,
+    height: 128,
+    borderRadius: 12,
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e5e7eb',
+  },
+  imageActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   dateLabel: {

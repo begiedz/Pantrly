@@ -1,61 +1,128 @@
 import {
   type BarcodeScanningResult,
+  type BarcodeType,
   CameraView,
+  scanFromURLAsync,
   useCameraPermissions,
 } from 'expo-camera';
-import { router } from 'expo-router';
-import { useRef } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Button } from 'react-native-paper';
 
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
+import { pickImageFromLibrary } from '@/lib/images/imagePicker';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
-import { addProduct } from '@/lib/store/appStore';
-import type { ProductEntity } from '@/types';
+
+const supportedBarcodeTypes: BarcodeType[] = [
+  'ean13',
+  'ean8',
+  'upc_a',
+  'upc_e',
+  'qr',
+  'code128',
+  'code39',
+];
 
 export default function Scanner() {
+  const params = useLocalSearchParams<{ source?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
+  const [isImporting, setIsImporting] = useState(false);
   const isScanningRef = useRef(false);
+  const hasAutoImportedRef = useRef(false);
 
-  const unlockScanner = () => {
+  const unlockScanner = useCallback(() => {
     isScanningRef.current = false;
-  };
+  }, []);
 
-  const showRequestError = () => {
+  const navigateToCreate = useCallback(
+    ({
+      barcode,
+      name,
+      brand,
+      categories,
+      imageUrl,
+    }: {
+      barcode?: string;
+      name?: string;
+      brand?: string;
+      categories?: string[];
+      imageUrl?: string;
+    }) => {
+      router.replace({
+        pathname: '/create',
+        params: {
+          barcode,
+          name,
+          brand,
+          categories: categories?.join(', '),
+          imageUrl,
+          source: 'scan',
+        },
+      });
+    },
+    [],
+  );
+
+  const showRequestError = useCallback(() => {
     Alert.alert('Request failed', 'Could not fetch product data.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
-  };
+  }, [unlockScanner]);
 
-  const showProductNotFound = () => {
+  const showProductNotFound = useCallback(() => {
     Alert.alert('Not found', 'No product found for this barcode.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
-  };
+  }, [unlockScanner]);
 
-  const showMappedProductError = () => {
+  const showMappedProductError = useCallback(() => {
     Alert.alert('Error', 'Could not map product data.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
-  };
+  }, [unlockScanner]);
 
-  const handleSuccess = (product: ProductEntity) => {
-    Alert.alert('Scan successful!', `${product.name}\n${product.brand}`, [
-      {
-        text: 'Scan again',
-        onPress: unlockScanner,
-      },
-      {
-        text: 'Add to Pantry',
-        isPreferred: true,
-        onPress: () => {
-          addProduct(product);
-          router.replace('/');
-        },
-      },
-    ]);
-  };
+  const resolveScannedBarcode = useCallback(
+    async ({ data, type }: Pick<BarcodeScanningResult, 'data' | 'type'>) => {
+      try {
+        const response = await getProductByBarcode(baseUrl, data, fields);
+
+        console.log(`Scan successful\nType: ${type}\nData: ${data}`);
+        console.log(JSON.stringify(response, null, 2));
+
+        if (response?.status !== 1) {
+          showProductNotFound();
+          return;
+        }
+
+        const product = mapApiProductToEntity(response);
+
+        if (!product) {
+          showMappedProductError();
+          return;
+        }
+
+        navigateToCreate({
+          barcode: product.barcode,
+          name: product.name,
+          brand: product.brand,
+          categories: product.categories,
+          imageUrl: product.imageUrl,
+        });
+      } catch (error) {
+        console.error('Barcode lookup failed:', error);
+        showRequestError();
+      }
+    },
+    [
+      navigateToCreate,
+      showMappedProductError,
+      showProductNotFound,
+      showRequestError,
+    ],
+  );
 
   const handleBarcodeScanned = async ({
     data,
@@ -64,31 +131,63 @@ export default function Scanner() {
     if (isScanningRef.current) return;
 
     isScanningRef.current = true;
+    await resolveScannedBarcode({ data, type });
+  };
+
+  const handleImportBarcode = useCallback(async () => {
+    if (isImporting) {
+      return;
+    }
+
+    setIsImporting(true);
 
     try {
-      const response = await getProductByBarcode(baseUrl, data, fields);
+      const uri = await pickImageFromLibrary();
 
-      console.log(`Scan successful\nType: ${type}\nData: ${data}`);
-      console.log(JSON.stringify(response, null, 2));
-
-      if (response?.status !== 1) {
-        showProductNotFound();
+      if (!uri) {
         return;
       }
 
-      const product = mapApiProductToEntity(response);
+      const results = await scanFromURLAsync(uri, supportedBarcodeTypes);
+      const match = results[0];
 
-      if (!product) {
-        showMappedProductError();
+      if (!match) {
+        Alert.alert(
+          'No barcode found',
+          'Try another photo where the barcode is larger and clearer.',
+        );
         return;
       }
 
-      handleSuccess(product);
+      isScanningRef.current = true;
+      await resolveScannedBarcode(match);
     } catch (error) {
-      console.error('Barcode lookup failed:', error);
-      showRequestError();
+      if (
+        error instanceof Error &&
+        error.message === 'PHOTO_PERMISSION_DENIED'
+      ) {
+        Alert.alert(
+          'Permission needed',
+          'Allow photo access to import a barcode image.',
+        );
+        return;
+      }
+
+      console.error('Barcode image scan failed:', error);
+      Alert.alert('Import failed', 'Could not scan a barcode from that image.');
+    } finally {
+      setIsImporting(false);
     }
-  };
+  }, [isImporting, resolveScannedBarcode]);
+
+  useEffect(() => {
+    if (params.source !== 'gallery' || hasAutoImportedRef.current) {
+      return;
+    }
+
+    hasAutoImportedRef.current = true;
+    void handleImportBarcode();
+  }, [handleImportBarcode, params.source]);
 
   if (!permission) {
     return (
@@ -101,6 +200,9 @@ export default function Scanner() {
         }}
       >
         <Text>Loading camera permission...</Text>
+        <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
+          Scan from gallery
+        </Button>
       </Screen>
     );
   }
@@ -120,6 +222,10 @@ export default function Scanner() {
         <Pressable onPress={requestPermission}>
           <Text>Grant permission</Text>
         </Pressable>
+
+        <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
+          Scan from gallery
+        </Button>
       </View>
     );
   }
@@ -132,17 +238,28 @@ export default function Scanner() {
         selectedLens='builtInWideAngleCamera'
         onBarcodeScanned={handleBarcodeScanned}
         barcodeScannerSettings={{
-          barcodeTypes: [
-            'ean13',
-            'ean8',
-            'upc_a',
-            'upc_e',
-            'qr',
-            'code128',
-            'code39',
-          ],
+          barcodeTypes: supportedBarcodeTypes,
         }}
       />
+      <View style={styles.actions}>
+        <Button
+          mode='contained-tonal'
+          icon='image'
+          onPress={handleImportBarcode}
+          loading={isImporting}
+        >
+          Scan from gallery
+        </Button>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  actions: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 24,
+  },
+});
