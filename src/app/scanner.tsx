@@ -284,6 +284,25 @@ export default function Scanner() {
           barcodeTypes: supportedBarcodeTypes,
         }}
       />
+      <View pointerEvents='none' style={styles.overlay}>
+        <View style={styles.topShade}>
+          <Text style={styles.overlayTitle}>Scan barcode</Text>
+          <Text style={styles.overlayHint}>
+            Align the barcode inside the frame
+          </Text>
+        </View>
+        <View style={styles.scanRow}>
+          <View style={styles.sideShade} />
+          <View style={styles.scanFrame}>
+            <View style={[styles.corner, styles.cornerTopLeft]} />
+            <View style={[styles.corner, styles.cornerTopRight]} />
+            <View style={[styles.corner, styles.cornerBottomLeft]} />
+            <View style={[styles.corner, styles.cornerBottomRight]} />
+          </View>
+          <View style={styles.sideShade} />
+        </View>
+        <View style={styles.bottomShade} />
+      </View>
       <View style={styles.actions}>
         {Platform.OS !== 'ios' && (
           <Button
@@ -301,6 +320,78 @@ export default function Scanner() {
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topShade: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+  },
+  overlayTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  overlayHint: {
+    marginTop: 8,
+    color: 'rgba(255, 255, 255, 0.82)',
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  scanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sideShade: {
+    flex: 1,
+    height: 220,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
+  scanFrame: {
+    width: 280,
+    height: 220,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  corner: {
+    position: 'absolute',
+    width: 34,
+    height: 34,
+    borderColor: '#fff',
+  },
+  cornerTopLeft: {
+    top: 16,
+    left: 16,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+  },
+  cornerTopRight: {
+    top: 16,
+    right: 16,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+  },
+  cornerBottomLeft: {
+    bottom: 16,
+    left: 16,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+  },
+  cornerBottomRight: {
+    right: 16,
+    bottom: 16,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  bottomShade: {
+    flex: 1.2,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
   actions: {
     position: 'absolute',
     left: 16,
