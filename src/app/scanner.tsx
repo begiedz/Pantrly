@@ -1,4 +1,5 @@
 import {
+  type AvailableLenses,
   type BarcodeScanningResult,
   type BarcodeType,
   CameraView,
@@ -33,9 +34,33 @@ const supportedBarcodeTypes: BarcodeType[] = [
   'code39',
 ];
 
+function getPreferredBackLens(lenses: string[]) {
+  const normalizedLenses = lenses.map((lens) => ({
+    original: lens,
+    normalized: lens.toLowerCase(),
+  }));
+
+  return (
+    normalizedLenses.find(({ normalized }) => normalized === 'back camera')
+      ?.original ??
+    normalizedLenses.find(
+      ({ normalized }) =>
+        normalized.includes('wide') && !normalized.includes('ultra'),
+    )?.original ??
+    normalizedLenses.find(
+      ({ normalized }) =>
+        !normalized.includes('ultra') &&
+        !normalized.includes('telephoto') &&
+        !normalized.includes('front') &&
+        !normalized.includes('true depth'),
+    )?.original
+  );
+}
+
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedLens, setSelectedLens] = useState<string>();
   const isScanningRef = useRef(false);
 
   const unlockScanner = useCallback(() => {
@@ -196,6 +221,17 @@ export default function Scanner() {
     }
   }, [isImporting, resolveScannedBarcode]);
 
+  const handleAvailableLensesChanged = useCallback(
+    ({ lenses }: AvailableLenses) => {
+      const preferredLens = getPreferredBackLens(lenses);
+
+      setSelectedLens((currentLens) =>
+        currentLens === preferredLens ? currentLens : preferredLens,
+      );
+    },
+    [],
+  );
+
   if (!permission) {
     return (
       <Screen
@@ -241,8 +277,9 @@ export default function Scanner() {
       <CameraView
         style={{ flex: 1 }}
         facing='back'
-        selectedLens='builtInWideAngleCamera'
+        selectedLens={selectedLens}
         onBarcodeScanned={handleBarcodeScanned}
+        onAvailableLensesChanged={handleAvailableLensesChanged}
         barcodeScannerSettings={{
           barcodeTypes: supportedBarcodeTypes,
         }}
