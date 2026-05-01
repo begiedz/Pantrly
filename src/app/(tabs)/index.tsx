@@ -5,13 +5,17 @@ import { FlatList, Image, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import Card from '@/components/card';
 import Screen from '@/components/screen';
+import { impactHaptic, selectionHaptic } from '@/lib/haptics';
 import { appStore } from '@/lib/store/appStore';
 
 export default function PantryScreen() {
   const products = useStore(appStore, (state) => state.products);
   const [state, setState] = useState({ open: false });
 
-  const onStateChange = ({ open }: { open: boolean }) => setState({ open });
+  const onStateChange = ({ open }: { open: boolean }) => {
+    selectionHaptic();
+    setState({ open });
+  };
   const { open } = state;
   return (
     <Screen>
@@ -32,12 +36,18 @@ export default function PantryScreen() {
           {
             icon: 'pencil',
             label: 'Manual',
-            onPress: () => router.push('/create'),
+            onPress: () => {
+              impactHaptic();
+              router.push('/create');
+            },
           },
           {
             icon: 'barcode-scan',
             label: 'Scan',
-            onPress: () => router.push('/scanner'),
+            onPress: () => {
+              impactHaptic();
+              router.push('/scanner');
+            },
           },
         ]}
         onStateChange={onStateChange}

@@ -22,6 +22,12 @@ import {
   takeImageWithCamera,
 } from '@/lib/images/imagePicker';
 import {
+  errorHaptic,
+  impactHaptic,
+  successHaptic,
+  warningHaptic,
+} from '@/lib/haptics';
+import {
   copyProductImageToStorage,
   downloadProductImageToStorage,
 } from '@/lib/images/productImages';
@@ -82,6 +88,7 @@ export default function CreateScreen() {
         error instanceof Error &&
         error.message === 'PHOTO_PERMISSION_DENIED'
       ) {
+        warningHaptic();
         Alert.alert(
           'Permission needed',
           'Allow photo access to attach an image to this item.',
@@ -89,6 +96,7 @@ export default function CreateScreen() {
         return;
       }
 
+      errorHaptic();
       Alert.alert('Image failed', 'Could not open the photo library.');
     }
   };
@@ -107,6 +115,7 @@ export default function CreateScreen() {
         error instanceof Error &&
         error.message === 'CAMERA_PERMISSION_DENIED'
       ) {
+        warningHaptic();
         Alert.alert(
           'Permission needed',
           'Allow camera access to take a product photo.',
@@ -114,12 +123,14 @@ export default function CreateScreen() {
         return;
       }
 
+      errorHaptic();
       Alert.alert('Camera failed', 'Could not take a photo.');
     }
   };
 
   const handleFetchByBarcode = async () => {
     if (!trimmedBarcode) {
+      warningHaptic();
       Alert.alert('Missing barcode', 'Enter a barcode before fetching.');
       return;
     }
@@ -135,6 +146,7 @@ export default function CreateScreen() {
       const product = mapApiProductToEntity(response);
 
       if (!product) {
+        warningHaptic();
         Alert.alert('Not found', 'No product found for this barcode.');
         return;
       }
@@ -143,9 +155,11 @@ export default function CreateScreen() {
       setBrand(product.brand ?? '');
       setCategories(product.categories?.join(', ') ?? '');
       setRemoteImageUrl(product.imageUrl);
+      successHaptic();
       Alert.alert('Product found', 'Filled the item details from barcode.');
     } catch (error) {
       console.error('Barcode lookup failed:', error);
+      errorHaptic();
       Alert.alert('Lookup failed', 'Could not fetch product data.');
     } finally {
       setIsFetchingProduct(false);
@@ -154,6 +168,7 @@ export default function CreateScreen() {
 
   const handleSave = async () => {
     if (!trimmedName) {
+      warningHaptic();
       Alert.alert('Missing name', 'Enter an item name before saving.');
       return;
     }
@@ -184,9 +199,11 @@ export default function CreateScreen() {
         bestBefore: bestBefore.toISOString(),
       });
 
+      successHaptic();
       router.replace('/');
     } catch (error) {
       console.error('Failed to save pantry item', error);
+      errorHaptic();
       Alert.alert(
         'Save failed',
         isScannedProduct
@@ -256,7 +273,10 @@ export default function CreateScreen() {
               <Button
                 mode='outlined'
                 icon='database-search-outline'
-                onPress={handleFetchByBarcode}
+                onPress={() => {
+                  impactHaptic();
+                  void handleFetchByBarcode();
+                }}
                 loading={isFetchingProduct}
                 disabled={!trimmedBarcode || isFetchingProduct}
               >
@@ -302,13 +322,23 @@ export default function CreateScreen() {
               )}
 
               <View style={styles.imageActions}>
-                <Button mode='outlined' icon='camera' onPress={handleTakePhoto}>
+                <Button
+                  mode='outlined'
+                  icon='camera'
+                  onPress={() => {
+                    impactHaptic();
+                    void handleTakePhoto();
+                  }}
+                >
                   Take photo
                 </Button>
                 <Button
                   mode='outlined'
                   icon='image'
-                  onPress={handleChoosePhoto}
+                  onPress={() => {
+                    impactHaptic();
+                    void handleChoosePhoto();
+                  }}
                 >
                   Choose photo
                 </Button>
@@ -316,6 +346,7 @@ export default function CreateScreen() {
                   <Button
                     mode='text'
                     onPress={() => {
+                      impactHaptic();
                       setSelectedImageUri(undefined);
                       setRemoteImageUrl(undefined);
                     }}
@@ -328,10 +359,23 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.actions}>
-            <Button mode='text' onPress={() => router.back()}>
+            <Button
+              mode='text'
+              onPress={() => {
+                impactHaptic();
+                router.back();
+              }}
+            >
               Cancel
             </Button>
-            <Button mode='contained' onPress={handleSave} loading={isSaving}>
+            <Button
+              mode='contained'
+              onPress={() => {
+                impactHaptic();
+                void handleSave();
+              }}
+              loading={isSaving}
+            >
               Save item
             </Button>
           </View>

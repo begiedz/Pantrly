@@ -21,6 +21,12 @@ import { Button } from 'react-native-paper';
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
+import {
+  errorHaptic,
+  impactHaptic,
+  successHaptic,
+  warningHaptic,
+} from '@/lib/haptics';
 import { pickImageFromLibrary } from '@/lib/images/imagePicker';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
 
@@ -81,6 +87,7 @@ export default function Scanner() {
       categories?: string[];
       imageUrl?: string;
     }) => {
+      successHaptic();
       router.replace({
         pathname: '/create',
         params: {
@@ -97,18 +104,21 @@ export default function Scanner() {
   );
 
   const showRequestError = useCallback(() => {
+    errorHaptic();
     Alert.alert('Request failed', 'Could not fetch product data.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
   }, [unlockScanner]);
 
   const showProductNotFound = useCallback(() => {
+    warningHaptic();
     Alert.alert('Not found', 'No product found for this barcode.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
   }, [unlockScanner]);
 
   const showMappedProductError = useCallback(() => {
+    errorHaptic();
     Alert.alert('Error', 'Could not map product data.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
@@ -173,6 +183,7 @@ export default function Scanner() {
 
     try {
       if (Platform.OS === 'ios') {
+        warningHaptic();
         Alert.alert(
           'Limited on iPhone',
           'Scanning from gallery only supports QR codes on iOS. Product barcodes still need the live camera.',
@@ -193,6 +204,7 @@ export default function Scanner() {
       const match = results[0];
 
       if (!match) {
+        warningHaptic();
         Alert.alert(
           'No barcode found',
           'Try another photo where the barcode is larger and clearer.',
@@ -207,6 +219,7 @@ export default function Scanner() {
         error instanceof Error &&
         error.message === 'PHOTO_PERMISSION_DENIED'
       ) {
+        warningHaptic();
         Alert.alert(
           'Permission needed',
           'Allow photo access to import a barcode image.',
@@ -215,6 +228,7 @@ export default function Scanner() {
       }
 
       console.error('Barcode image scan failed:', error);
+      errorHaptic();
       Alert.alert('Import failed', 'Could not scan a barcode from that image.');
     } finally {
       setIsImporting(false);
@@ -243,7 +257,14 @@ export default function Scanner() {
         }}
       >
         <Text>Loading camera permission...</Text>
-        <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
+        <Button
+          mode='text'
+          onPress={() => {
+            impactHaptic();
+            void handleImportBarcode();
+          }}
+          loading={isImporting}
+        >
           Scan from gallery
         </Button>
       </Screen>
@@ -262,10 +283,22 @@ export default function Scanner() {
       >
         <Text>We need camera permission to scan barcodes.</Text>
 
-        <Pressable onPress={requestPermission}>
+        <Pressable
+          onPress={() => {
+            impactHaptic();
+            void requestPermission();
+          }}
+        >
           <Text>Grant permission</Text>
         </Pressable>
-        <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
+        <Button
+          mode='text'
+          onPress={() => {
+            impactHaptic();
+            void handleImportBarcode();
+          }}
+          loading={isImporting}
+        >
           Scan from gallery
         </Button>
       </View>
@@ -308,7 +341,10 @@ export default function Scanner() {
           <Button
             mode='contained-tonal'
             icon='image'
-            onPress={handleImportBarcode}
+            onPress={() => {
+              impactHaptic();
+              void handleImportBarcode();
+            }}
             loading={isImporting}
           >
             Scan from gallery

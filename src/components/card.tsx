@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Avatar, Card, IconButton } from 'react-native-paper';
 import { getProductImageUri } from '@/lib/images/productImages';
+import { impactHaptic } from '@/lib/haptics';
 import { capitalize, getCategory } from '@/lib/utils';
 import type { ProductEntity } from '@/types';
 
@@ -25,12 +26,13 @@ const RightContent = ({ id }: { id: string }) => {
   return (
     <IconButton
       icon={'chevron-right'}
-      onPress={() =>
+      onPress={() => {
+        impactHaptic();
         router.push({
           pathname: '/product/[id]',
           params: { id },
-        })
-      }
+        });
+      }}
     />
   );
 };
