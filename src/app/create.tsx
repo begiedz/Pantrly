@@ -1,4 +1,5 @@
 import DateTimePicker, {
+  DateTimePickerAndroid,
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as Crypto from 'expo-crypto';
@@ -8,25 +9,35 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { Button, HelperText, Text, TextInput } from 'react-native-paper';
+import {
+  Button,
+  HelperText,
+  Modal,
+  Portal,
+  Text,
+  TextInput,
+  useTheme,
+} from 'react-native-paper';
 
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
-import {
-  pickImageFromLibrary,
-  takeImageWithCamera,
-} from '@/lib/images/imagePicker';
 import {
   errorHaptic,
   impactHaptic,
   successHaptic,
   warningHaptic,
 } from '@/lib/haptics';
+import {
+  pickImageFromLibrary,
+  takeImageWithCamera,
+} from '@/lib/images/imagePicker';
 import {
   copyProductImageToStorage,
   downloadProductImageToStorage,
@@ -35,6 +46,7 @@ import mapApiProductToEntity from '@/lib/mappers/productMapper';
 import { addProduct } from '@/lib/store/appStore';
 
 export default function CreateScreen() {
+  const theme = useTheme();
   const params = useLocalSearchParams<{
     barcode?: string;
     name?: string;
@@ -51,6 +63,8 @@ export default function CreateScreen() {
   const [remoteImageUrl, setRemoteImageUrl] = useState(params.imageUrl);
   const [selectedImageUri, setSelectedImageUri] = useState<string>();
   const [bestBefore, setBestBefore] = useState<Date>(initialBestBefore);
+  const [isIosDatePickerVisible, setIsIosDatePickerVisible] = useState(false);
+  const [iosPickerDate, setIosPickerDate] = useState<Date>(initialBestBefore);
   const [isFetchingProduct, setIsFetchingProduct] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -59,9 +73,17 @@ export default function CreateScreen() {
   const trimmedBrand = brand.trim();
   const trimmedCategories = categories.trim();
 
-  const selectedBestBefore = bestBefore;
   const previewImageUri = selectedImageUri ?? remoteImageUrl;
   const isScannedProduct = params.source === 'scan';
+  const formattedBestBefore = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }).format(bestBefore),
+    [bestBefore],
+  );
 
   const handleDateChange = (
     event: DateTimePickerEvent,
@@ -72,6 +94,43 @@ export default function CreateScreen() {
     }
 
     setBestBefore(selectedDate);
+  };
+
+  const handleIosDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    if (event.type !== 'set' || !selectedDate) {
+      return;
+    }
+
+    setIosPickerDate(selectedDate);
+  };
+
+  const handleOpenDatePicker = () => {
+    impactHaptic();
+
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: bestBefore,
+        mode: 'date',
+        display: 'default',
+        onChange: handleDateChange,
+      });
+      return;
+    }
+
+    setIosPickerDate(bestBefore);
+    setIsIosDatePickerVisible(true);
+  };
+
+  const handleCloseIosDatePicker = () => {
+    setIsIosDatePickerVisible(false);
+  };
+
+  const handleConfirmIosDatePicker = () => {
+    setBestBefore(iosPickerDate);
+    setIsIosDatePickerVisible(false);
   };
 
   const handleChoosePhoto = async () => {
@@ -250,12 +309,26 @@ export default function CreateScreen() {
                 Best before
               </Text>
 
-              <DateTimePicker
-                value={selectedBestBefore}
-                mode='date'
-                display='default'
-                onChange={handleDateChange}
-              />
+              <Pressable
+                onPress={handleOpenDatePicker}
+                style={styles.dateTrigger}
+              >
+                <View>
+                  <Text variant='labelMedium' style={styles.dateTriggerLabel}>
+                    Selected date
+                  </Text>
+                  <Text variant='titleMedium'>{formattedBestBefore}</Text>
+                </View>
+                <Text
+                  variant='bodyMedium'
+                  style={[
+                    styles.dateTriggerAction,
+                    { color: theme.colors.primary },
+                  ]}
+                >
+                  Change
+                </Text>
+              </Pressable>
             </View>
             <View style={styles.barcodeField}>
               <TextInput
@@ -381,6 +454,36 @@ export default function CreateScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {Platform.OS === 'ios' ? (
+        <Portal>
+          <Modal
+            visible={isIosDatePickerVisible}
+            onDismiss={handleCloseIosDatePicker}
+            contentContainerStyle={[
+              styles.iosDateModal,
+              { backgroundColor: theme.colors.background },
+            ]}
+          >
+            <Text variant='titleMedium'>Best before</Text>
+            <View style={styles.iosDatePickerContainer}>
+              <DateTimePicker
+                value={iosPickerDate}
+                mode='date'
+                display='spinner'
+                onChange={handleIosDateChange}
+              />
+            </View>
+            <View style={styles.iosDateModalActions}>
+              <Button mode='text' onPress={handleCloseIosDatePicker}>
+                Cancel
+              </Button>
+              <Button mode='contained' onPress={handleConfirmIosDatePicker}>
+                Done
+              </Button>
+            </View>
+          </Modal>
+        </Portal>
+      ) : null}
     </Screen>
   );
 }
@@ -436,6 +539,41 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     opacity: 0.7,
     paddingHorizontal: 12,
+  },
+  dateTrigger: {
+    alignItems: 'center',
+    borderColor: '#cbd5e1',
+    borderRadius: 4,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 64,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+
+  dateTriggerLabel: {
+    marginBottom: 4,
+    opacity: 0.6,
+  },
+  dateTriggerAction: {
+    fontWeight: '600',
+  },
+  iosDatePickerContainer: {
+    alignItems: 'center',
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  iosDateModal: {
+    borderRadius: 24,
+    margin: 20,
+    padding: 20,
+  },
+  iosDateModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'flex-end',
+    marginTop: 16,
   },
   actions: {
     flexDirection: 'row',
