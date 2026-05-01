@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import Logo from '@/components/logo';
 import Screen from '@/components/screen';
+import { impactHaptic, selectionHaptic, successHaptic } from '@/lib/haptics';
 import { clearProducts } from '@/lib/store/appStore';
 
 export default function SettingsScreen() {
@@ -13,13 +14,21 @@ export default function SettingsScreen() {
     : (Constants.expoConfig?.version ?? 'unknown');
 
   const handleClearPantry = () => {
+    impactHaptic();
     Alert.alert('Clear pantry?', 'This will remove all scanned items.', [
-      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+        onPress: () => {
+          selectionHaptic();
+        },
+      },
       {
         text: 'Clear',
         style: 'destructive',
-        onPress: () => {
-          void clearProducts();
+        onPress: async () => {
+          await clearProducts();
+          successHaptic();
         },
       },
     ]);

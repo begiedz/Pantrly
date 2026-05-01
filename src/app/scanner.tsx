@@ -1,4 +1,5 @@
 import {
+  type AvailableLenses,
   type BarcodeScanningResult,
   type BarcodeType,
   CameraView,
@@ -20,6 +21,12 @@ import { Button } from 'react-native-paper';
 import { getProductByBarcode } from '@/api/products';
 import Screen from '@/components/screen';
 import { baseUrl, fields } from '@/config';
+import {
+  errorHaptic,
+  impactHaptic,
+  successHaptic,
+  warningHaptic,
+} from '@/lib/haptics';
 import { pickImageFromLibrary } from '@/lib/images/imagePicker';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
 
@@ -33,9 +40,33 @@ const supportedBarcodeTypes: BarcodeType[] = [
   'code39',
 ];
 
+function getPreferredBackLens(lenses: string[]) {
+  const normalizedLenses = lenses.map((lens) => ({
+    original: lens,
+    normalized: lens.toLowerCase(),
+  }));
+
+  return (
+    normalizedLenses.find(({ normalized }) => normalized === 'back camera')
+      ?.original ??
+    normalizedLenses.find(
+      ({ normalized }) =>
+        normalized.includes('wide') && !normalized.includes('ultra'),
+    )?.original ??
+    normalizedLenses.find(
+      ({ normalized }) =>
+        !normalized.includes('ultra') &&
+        !normalized.includes('telephoto') &&
+        !normalized.includes('front') &&
+        !normalized.includes('true depth'),
+    )?.original
+  );
+}
+
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedLens, setSelectedLens] = useState<string>();
   const isScanningRef = useRef(false);
 
   const unlockScanner = useCallback(() => {
@@ -56,6 +87,7 @@ export default function Scanner() {
       categories?: string[];
       imageUrl?: string;
     }) => {
+      successHaptic();
       router.replace({
         pathname: '/create',
         params: {
@@ -72,18 +104,21 @@ export default function Scanner() {
   );
 
   const showRequestError = useCallback(() => {
+    errorHaptic();
     Alert.alert('Request failed', 'Could not fetch product data.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
   }, [unlockScanner]);
 
   const showProductNotFound = useCallback(() => {
+    warningHaptic();
     Alert.alert('Not found', 'No product found for this barcode.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
   }, [unlockScanner]);
 
   const showMappedProductError = useCallback(() => {
+    errorHaptic();
     Alert.alert('Error', 'Could not map product data.', [
       { text: 'OK', onPress: unlockScanner },
     ]);
@@ -148,6 +183,7 @@ export default function Scanner() {
 
     try {
       if (Platform.OS === 'ios') {
+        warningHaptic();
         Alert.alert(
           'Limited on iPhone',
           'Scanning from gallery only supports QR codes on iOS. Product barcodes still need the live camera.',
@@ -168,6 +204,7 @@ export default function Scanner() {
       const match = results[0];
 
       if (!match) {
+        warningHaptic();
         Alert.alert(
           'No barcode found',
           'Try another photo where the barcode is larger and clearer.',
@@ -182,6 +219,7 @@ export default function Scanner() {
         error instanceof Error &&
         error.message === 'PHOTO_PERMISSION_DENIED'
       ) {
+        warningHaptic();
         Alert.alert(
           'Permission needed',
           'Allow photo access to import a barcode image.',
@@ -190,11 +228,23 @@ export default function Scanner() {
       }
 
       console.error('Barcode image scan failed:', error);
+      errorHaptic();
       Alert.alert('Import failed', 'Could not scan a barcode from that image.');
     } finally {
       setIsImporting(false);
     }
   }, [isImporting, resolveScannedBarcode]);
+
+  const handleAvailableLensesChanged = useCallback(
+    ({ lenses }: AvailableLenses) => {
+      const preferredLens = getPreferredBackLens(lenses);
+
+      setSelectedLens((currentLens) =>
+        currentLens === preferredLens ? currentLens : preferredLens,
+      );
+    },
+    [],
+  );
 
   if (!permission) {
     return (
@@ -207,7 +257,14 @@ export default function Scanner() {
         }}
       >
         <Text>Loading camera permission...</Text>
-        <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
+        <Button
+          mode='text'
+          onPress={() => {
+            impactHaptic();
+            void handleImportBarcode();
+          }}
+          loading={isImporting}
+        >
           Scan from gallery
         </Button>
       </Screen>
@@ -226,10 +283,22 @@ export default function Scanner() {
       >
         <Text>We need camera permission to scan barcodes.</Text>
 
-        <Pressable onPress={requestPermission}>
+        <Pressable
+          onPress={() => {
+            impactHaptic();
+            void requestPermission();
+          }}
+        >
           <Text>Grant permission</Text>
         </Pressable>
-        <Button mode='text' onPress={handleImportBarcode} loading={isImporting}>
+        <Button
+          mode='text'
+          onPress={() => {
+            impactHaptic();
+            void handleImportBarcode();
+          }}
+          loading={isImporting}
+        >
           Scan from gallery
         </Button>
       </View>
@@ -241,18 +310,41 @@ export default function Scanner() {
       <CameraView
         style={{ flex: 1 }}
         facing='back'
-        selectedLens='builtInWideAngleCamera'
+        selectedLens={selectedLens}
         onBarcodeScanned={handleBarcodeScanned}
+        onAvailableLensesChanged={handleAvailableLensesChanged}
         barcodeScannerSettings={{
           barcodeTypes: supportedBarcodeTypes,
         }}
       />
+      <View pointerEvents='none' style={styles.overlay}>
+        <View style={styles.topShade}>
+          <Text style={styles.overlayTitle}>Scan barcode</Text>
+          <Text style={styles.overlayHint}>
+            Align the barcode inside the frame
+          </Text>
+        </View>
+        <View style={styles.scanRow}>
+          <View style={styles.sideShade} />
+          <View style={styles.scanFrame}>
+            <View style={[styles.corner, styles.cornerTopLeft]} />
+            <View style={[styles.corner, styles.cornerTopRight]} />
+            <View style={[styles.corner, styles.cornerBottomLeft]} />
+            <View style={[styles.corner, styles.cornerBottomRight]} />
+          </View>
+          <View style={styles.sideShade} />
+        </View>
+        <View style={styles.bottomShade} />
+      </View>
       <View style={styles.actions}>
         {Platform.OS !== 'ios' && (
           <Button
             mode='contained-tonal'
             icon='image'
-            onPress={handleImportBarcode}
+            onPress={() => {
+              impactHaptic();
+              void handleImportBarcode();
+            }}
             loading={isImporting}
           >
             Scan from gallery
@@ -264,6 +356,78 @@ export default function Scanner() {
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topShade: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+  },
+  overlayTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  overlayHint: {
+    marginTop: 8,
+    color: 'rgba(255, 255, 255, 0.82)',
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  scanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sideShade: {
+    flex: 1,
+    height: 220,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
+  scanFrame: {
+    width: 280,
+    height: 220,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  corner: {
+    position: 'absolute',
+    width: 34,
+    height: 34,
+    borderColor: '#fff',
+  },
+  cornerTopLeft: {
+    top: 16,
+    left: 16,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+  },
+  cornerTopRight: {
+    top: 16,
+    right: 16,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+  },
+  cornerBottomLeft: {
+    bottom: 16,
+    left: 16,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+  },
+  cornerBottomRight: {
+    right: 16,
+    bottom: 16,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  bottomShade: {
+    flex: 1.2,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
   actions: {
     position: 'absolute',
     left: 16,

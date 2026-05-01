@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
+import { PaperProvider } from 'react-native-paper';
 import Header from '@/components/header';
+import { pantrlyDarkTheme, pantrlyLightTheme } from '@/config/themes';
 import { hydrateProducts } from '@/lib/store/appStore';
 
 export { ErrorBoundary } from 'expo-router';
@@ -10,8 +11,8 @@ export default function RootLayout() {
   const scheme = useColorScheme();
   const theme =
     scheme === 'dark'
-      ? { ...MD3DarkTheme, mode: 'adaptive' as const }
-      : MD3LightTheme;
+      ? { ...pantrlyDarkTheme, mode: 'adaptive' as const }
+      : pantrlyLightTheme;
 
   useEffect(() => {
     void hydrateProducts();
@@ -32,7 +33,7 @@ export default function RootLayout() {
           name='scanner'
           options={{
             title: 'Scanner',
-            presentation: 'modal',
+            presentation: 'containedModal',
             header: (props) => <Header {...props} />,
           }}
         />

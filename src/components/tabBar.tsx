@@ -1,5 +1,6 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BottomNavigation } from 'react-native-paper';
+import { softHaptic } from '@/lib/haptics';
 
 export default function TabBar({
   navigation,
@@ -17,10 +18,14 @@ export default function TabBar({
           target: route.key,
           canPreventDefault: true,
         });
+        const isFocused = state.routes[state.index]?.key === route.key;
 
         if (event.defaultPrevented) {
           preventDefault();
         } else {
+          if (!isFocused) {
+            softHaptic();
+          }
           navigation.navigate(route.name, route.params);
         }
       }}

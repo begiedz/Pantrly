@@ -3,6 +3,7 @@ import { getHeaderTitle } from '@react-navigation/elements';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 
 import { Appbar } from 'react-native-paper';
+import { impactHaptic } from '@/lib/haptics';
 
 type HeaderProps = (NativeStackHeaderProps | BottomTabHeaderProps) & {
   back?: NativeStackHeaderProps['back'];
@@ -18,7 +19,14 @@ export default function Header({
 
   return (
     <Appbar.Header elevated>
-      {back ? <Appbar.BackAction onPress={() => navigation.goBack()} /> : null}
+      {back ? (
+        <Appbar.BackAction
+          onPress={() => {
+            impactHaptic();
+            navigation.goBack();
+          }}
+        />
+      ) : null}
       <Appbar.Content title={title} />
     </Appbar.Header>
   );
