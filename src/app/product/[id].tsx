@@ -1,15 +1,17 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useStore } from '@tanstack/react-store';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import {
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Avatar, Card, Divider, Text } from 'react-native-paper';
+import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
 
 import Screen from '@/components/screen';
+import { impactHaptic } from '@/lib/haptics';
 import { getProductImageUri } from '@/lib/images/productImages';
-import { getProductById } from '@/lib/store/appStore';
+import { appStore } from '@/lib/store/appStore';
 import { normalizeCategories } from '@/lib/utils';
 
 type DetailRowProps = {
@@ -42,7 +44,9 @@ export default function ProductDetailsScreen() {
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const product = getProductById(id);
+  const product = useStore(appStore, (state) =>
+    state.products.find((item) => item.id === id),
+  );
   const imageUri = getProductImageUri(product);
   const title = product?.name || product?.brand || 'Product Details';
   const subtitle = product?.brand ? product.brand : null;
@@ -64,11 +68,30 @@ export default function ProductDetailsScreen() {
       )
     : [];
 
+  const handleEdit = () => {
+    if (!product) {
+      return;
+    }
+
+    impactHaptic();
+    router.push({
+      pathname: '/create',
+      params: { id: product.id },
+    });
+  };
+
   return (
     <>
       <Stack.Screen
         options={{
           title,
+          headerRight: product
+            ? () => (
+                <Button compact mode='text' icon='pencil' onPress={handleEdit}>
+                  Edit
+                </Button>
+              )
+            : undefined,
         }}
       />
       <Screen style={[styles.screen, { padding: horizontalPadding }]}>

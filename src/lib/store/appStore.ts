@@ -46,6 +46,23 @@ export function addProduct(product: ProductEntity) {
   void savePantryItems(nextProducts);
 }
 
+export function updateProduct(product: ProductEntity) {
+  let nextProducts: ProductEntity[] = [];
+
+  appStore.setState((state) => {
+    nextProducts = state.products.map((item) =>
+      item.id === product.id ? product : item,
+    );
+
+    return {
+      ...state,
+      products: nextProducts,
+    };
+  });
+
+  void savePantryItems(nextProducts);
+}
+
 export async function removeProduct(productId: string) {
   const product = getProductById(productId);
   let nextProducts: ProductEntity[] = [];

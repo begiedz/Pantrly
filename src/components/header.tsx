@@ -1,6 +1,7 @@
 import type { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
 import { getHeaderTitle } from '@react-navigation/elements';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
+import { StyleSheet, View } from 'react-native';
 
 import { Appbar } from 'react-native-paper';
 import { impactHaptic } from '@/lib/haptics';
@@ -16,6 +17,9 @@ export default function Header({
   back,
 }: HeaderProps) {
   const title = getHeaderTitle(options, route.name);
+  const rightAction = options.headerRight?.({
+    canGoBack: Boolean(back),
+  } as never);
 
   return (
     <Appbar.Header elevated>
@@ -28,6 +32,13 @@ export default function Header({
         />
       ) : null}
       <Appbar.Content title={title} />
+      {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
     </Appbar.Header>
   );
 }
+
+const styles = StyleSheet.create({
+  rightAction: {
+    marginRight: 4,
+  },
+});

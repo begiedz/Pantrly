@@ -3,7 +3,7 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as Crypto from 'expo-crypto';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   Alert,
@@ -41,15 +41,17 @@ import {
 } from '@/lib/images/imagePicker';
 import {
   copyProductImageToStorage,
+  deleteProductImage,
   downloadProductImageToStorage,
 } from '@/lib/images/productImages';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
-import { addProduct } from '@/lib/store/appStore';
+import { addProduct, getProductById, updateProduct } from '@/lib/store/appStore';
 
 export default function CreateScreen() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{
+    id?: string;
     barcode?: string;
     name?: string;
     brand?: string;
@@ -57,12 +59,30 @@ export default function CreateScreen() {
     imageUrl?: string;
     source?: string;
   }>();
-  const initialBestBefore = useMemo(() => new Date(), []);
-  const [barcode, setBarcode] = useState(params.barcode ?? '');
-  const [name, setName] = useState(params.name ?? '');
-  const [brand, setBrand] = useState(params.brand ?? '');
-  const [categories, setCategories] = useState(params.categories ?? '');
-  const [remoteImageUrl, setRemoteImageUrl] = useState(params.imageUrl);
+  const existingProduct = params.id ? getProductById(params.id) : undefined;
+  const originalStoredImageUri = existingProduct?.localImageUri;
+  const isEditing = Boolean(existingProduct);
+  const initialBestBefore = useMemo(
+    () =>
+      existingProduct?.bestBefore
+        ? new Date(existingProduct.bestBefore)
+        : new Date(),
+    [existingProduct?.bestBefore],
+  );
+  const [barcode, setBarcode] = useState(
+    existingProduct?.barcode ?? params.barcode ?? '',
+  );
+  const [name, setName] = useState(existingProduct?.name ?? params.name ?? '');
+  const [brand, setBrand] = useState(
+    existingProduct?.brand ?? params.brand ?? '',
+  );
+  const [categories, setCategories] = useState(
+    existingProduct?.categories?.join(', ') ?? params.categories ?? '',
+  );
+  const [remoteImageUrl, setRemoteImageUrl] = useState(
+    existingProduct?.imageUrl ?? params.imageUrl,
+  );
+  const [storedImageUri, setStoredImageUri] = useState(originalStoredImageUri);
   const [selectedImageUri, setSelectedImageUri] = useState<string>();
   const [bestBefore, setBestBefore] = useState<Date>(initialBestBefore);
   const [isIosDatePickerVisible, setIsIosDatePickerVisible] = useState(false);
@@ -75,11 +95,17 @@ export default function CreateScreen() {
   const trimmedBrand = brand.trim();
   const trimmedCategories = categories.trim();
 
-  const previewImageUri = selectedImageUri ?? remoteImageUrl;
+  const previewImageUri = selectedImageUri ?? storedImageUri ?? remoteImageUrl;
   const isScannedProduct = params.source === 'scan';
   const isWideLayout = width >= 768;
   const contentPadding = width < 380 ? 16 : width < 768 ? 20 : 24;
   const imagePreviewSize = Math.min(width * (isWideLayout ? 0.22 : 0.32), 180);
+  const screenTitle = isEditing ? 'Edit product' : 'New product';
+  const headerTitle = isEditing
+    ? 'Update pantry item details.'
+    : isScannedProduct
+      ? 'Check the scanned item details, then set its best before date.'
+      : 'Enter an item information and store its best before date.';
   const formattedBestBefore = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -240,14 +266,23 @@ export default function CreateScreen() {
     setIsSaving(true);
 
     try {
-      const id = Crypto.randomUUID();
-      const localImageUri = selectedImageUri
-        ? await copyProductImageToStorage(selectedImageUri, id)
-        : remoteImageUrl
-          ? await downloadProductImageToStorage(remoteImageUrl, id)
-          : undefined;
+      const id = existingProduct?.id ?? Crypto.randomUUID();
+      let localImageUri = storedImageUri;
 
-      addProduct({
+      if (!previewImageUri && originalStoredImageUri) {
+        await deleteProductImage(originalStoredImageUri);
+        localImageUri = undefined;
+      } else if (selectedImageUri) {
+        if (originalStoredImageUri) {
+          await deleteProductImage(originalStoredImageUri);
+        }
+
+        localImageUri = await copyProductImageToStorage(selectedImageUri, id);
+      } else if (!storedImageUri && remoteImageUrl) {
+        localImageUri = await downloadProductImageToStorage(remoteImageUrl, id);
+      }
+
+      const product = {
         id,
         barcode: trimmedBarcode || undefined,
         name: trimmedName,
@@ -261,10 +296,20 @@ export default function CreateScreen() {
         imageUrl: remoteImageUrl || undefined,
         localImageUri,
         bestBefore: bestBefore.toISOString(),
-      });
+      };
+
+      if (isEditing) {
+        updateProduct(product);
+      } else {
+        addProduct(product);
+      }
 
       successHaptic();
-      router.replace('/');
+      if (isEditing) {
+        router.back();
+      } else {
+        router.replace('/');
+      }
     } catch (error) {
       console.error('Failed to save pantry item', error);
       errorHaptic();
@@ -281,6 +326,11 @@ export default function CreateScreen() {
 
   return (
     <Screen>
+      <Stack.Screen
+        options={{
+          title: screenTitle,
+        }}
+      />
       <KeyboardAvoidingView style={styles.container}>
         <ScrollView
           automaticallyAdjustKeyboardInsets
@@ -288,12 +338,14 @@ export default function CreateScreen() {
         >
           <View style={styles.header}>
             <Text variant='headlineMedium'>
-              {isScannedProduct ? 'Review scanned item' : 'Add pantry item'}
+              {isEditing
+                ? 'Edit pantry item'
+                : isScannedProduct
+                  ? 'Review scanned item'
+                  : 'Add pantry item'}
             </Text>
             <Text variant='bodySmall' style={styles.subtleText}>
-              {isScannedProduct
-                ? 'Check the scanned item details, then set its best before date.'
-                : 'Enter an item information and store its best before date.'}
+              {headerTitle}
             </Text>
           </View>
 
@@ -449,6 +501,7 @@ export default function CreateScreen() {
                     onPress={() => {
                       impactHaptic();
                       setSelectedImageUri(undefined);
+                      setStoredImageUri(undefined);
                       setRemoteImageUrl(undefined);
                     }}
                   >
@@ -481,7 +534,7 @@ export default function CreateScreen() {
               }}
               loading={isSaving}
             >
-              Save item
+              {isEditing ? 'Save changes' : 'Save item'}
             </Button>
           </View>
         </ScrollView>
