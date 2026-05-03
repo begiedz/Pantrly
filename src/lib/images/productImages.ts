@@ -72,3 +72,13 @@ export async function deleteProductImagesDirectory() {
     idempotent: true,
   });
 }
+
+export async function deleteProductImage(uri?: string) {
+  if (!uri) {
+    return;
+  }
+
+  await FileSystem.deleteAsync(uri, {
+    idempotent: true,
+  });
+}

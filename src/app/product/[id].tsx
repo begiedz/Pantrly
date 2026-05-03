@@ -1,10 +1,17 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { Avatar, Card, Divider, Text } from 'react-native-paper';
+import { useStore } from '@tanstack/react-store';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import {
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
 
 import Screen from '@/components/screen';
+import { impactHaptic } from '@/lib/haptics';
 import { getProductImageUri } from '@/lib/images/productImages';
-import { getProductById } from '@/lib/store/appStore';
+import { appStore } from '@/lib/store/appStore';
 import { normalizeCategories } from '@/lib/utils';
 
 type DetailRowProps = {
@@ -34,9 +41,12 @@ function DetailRow({ label, value, isLast = false }: DetailRowProps) {
 }
 
 export default function ProductDetailsScreen() {
+  const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const product = getProductById(id);
+  const product = useStore(appStore, (state) =>
+    state.products.find((item) => item.id === id),
+  );
   const imageUri = getProductImageUri(product);
   const title = product?.name || product?.brand || 'Product Details';
   const subtitle = product?.brand ? product.brand : null;
@@ -45,6 +55,8 @@ export default function ProductDetailsScreen() {
     : undefined;
 
   const categories = normalizeCategories(product?.categories);
+  const horizontalPadding = width < 380 ? 12 : width < 768 ? 16 : 24;
+  const coverHeight = Math.min(Math.max(width * 0.55, 200), 320);
 
   const detailRows = product
     ? [
@@ -56,14 +68,33 @@ export default function ProductDetailsScreen() {
       )
     : [];
 
+  const handleEdit = () => {
+    if (!product) {
+      return;
+    }
+
+    impactHaptic();
+    router.push({
+      pathname: '/create',
+      params: { id: product.id },
+    });
+  };
+
   return (
     <>
       <Stack.Screen
         options={{
           title,
+          headerRight: product
+            ? () => (
+                <Button compact mode='text' icon='pencil' onPress={handleEdit}>
+                  Edit
+                </Button>
+              )
+            : undefined,
         }}
       />
-      <Screen style={styles.screen}>
+      <Screen style={[styles.screen, { padding: horizontalPadding }]}>
         {!product ? (
           <View style={styles.emptyState}>
             <Text variant='headlineSmall'>Product not found</Text>
@@ -72,12 +103,20 @@ export default function ProductDetailsScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+          >
             <Card mode='contained' style={styles.card}>
               {imageUri ? (
-                <Card.Cover source={{ uri: imageUri }} style={styles.cover} />
+                <Card.Cover
+                  source={{ uri: imageUri }}
+                  style={[styles.cover, { height: coverHeight }]}
+                />
               ) : (
-                <View style={styles.coverPlaceholder}>
+                <View
+                  style={[styles.coverPlaceholder, { height: coverHeight }]}
+                >
                   <Avatar.Icon icon='image-outline' size={56} />
                 </View>
               )}
@@ -108,20 +147,22 @@ export default function ProductDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    padding: 16,
+  screen: {},
+  scrollView: {
+    width: '100%',
   },
   content: {
+    flexGrow: 1,
     paddingBottom: 24,
   },
   card: {
     overflow: 'hidden',
+    width: '100%',
   },
   cover: {
-    height: 240,
+    width: '100%',
   },
   coverPlaceholder: {
-    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
   },
