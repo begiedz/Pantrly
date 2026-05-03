@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Avatar, Card, IconButton, Text } from 'react-native-paper';
-import { impactHaptic } from '@/lib/haptics';
+import { impactHaptic, warningHaptic } from '@/lib/haptics';
 import { getProductImageUri } from '@/lib/images/productImages';
+import { removeProduct } from '@/lib/store/appStore';
 import { capitalize, getCategory } from '@/lib/utils';
 import type { ProductEntity } from '@/types';
 
@@ -42,46 +44,70 @@ export default function PantryCard({ product }: PantryCardProps) {
     });
   };
 
+  const handleDelete = () => {
+    warningHaptic();
+    removeProduct(product.id);
+  };
+
+  const renderRightActions = () => (
+    <View style={styles.deleteAction}>
+      <IconButton
+        icon='trash-can-outline'
+        iconColor='#fff'
+        onPress={handleDelete}
+      />
+      <Text variant='labelMedium' style={styles.deleteLabel}>
+        Delete
+      </Text>
+    </View>
+  );
+
   return (
-    <Card mode='contained' onPress={handlePress}>
-      <Card.Content style={styles.content}>
-        <View style={styles.row}>
-          <View style={styles.left}>
-            <LeftContent imageUri={getProductImageUri(product)} size={56} />
+    <Swipeable
+      overshootRight={false}
+      renderRightActions={renderRightActions}
+      rightThreshold={40}
+    >
+      <Card mode='contained' onPress={handlePress}>
+        <Card.Content style={styles.content}>
+          <View style={styles.row}>
+            <View style={styles.left}>
+              <LeftContent imageUri={getProductImageUri(product)} size={56} />
+            </View>
+
+            <View style={styles.body}>
+              {title && (
+                <Text variant='titleMedium' numberOfLines={1}>
+                  {title}
+                </Text>
+              )}
+
+              {company && (
+                <Text variant='bodySmall' style={styles.meta}>
+                  {company}
+                </Text>
+              )}
+
+              {category && (
+                <Text variant='bodySmall' style={styles.meta}>
+                  {category}
+                </Text>
+              )}
+
+              {bestBeforeDate && (
+                <Text variant='bodySmall' style={styles.meta}>
+                  {bestBeforeDate}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.right}>
+              <IconButton icon='chevron-right' />
+            </View>
           </View>
-
-          <View style={styles.body}>
-            {title && (
-              <Text variant='titleMedium' numberOfLines={1}>
-                {title}
-              </Text>
-            )}
-
-            {company && (
-              <Text variant='bodySmall' style={styles.meta}>
-                {company}
-              </Text>
-            )}
-
-            {category && (
-              <Text variant='bodySmall' style={styles.meta}>
-                {category}
-              </Text>
-            )}
-
-            {bestBeforeDate && (
-              <Text variant='bodySmall' style={styles.meta}>
-                {bestBeforeDate}
-              </Text>
-            )}
-          </View>
-
-          <View style={styles.right}>
-            <IconButton icon='chevron-right' />
-          </View>
-        </View>
-      </Card.Content>
-    </Card>
+        </Card.Content>
+      </Card>
+    </Swipeable>
   );
 }
 
@@ -105,5 +131,18 @@ const styles = StyleSheet.create({
   },
   meta: {
     opacity: 0.78,
+  },
+  deleteAction: {
+    alignItems: 'center',
+    backgroundColor: '#b3261e',
+    borderRadius: 12,
+    justifyContent: 'center',
+    marginLeft: 12,
+    paddingHorizontal: 16,
+    width: 104,
+  },
+  deleteLabel: {
+    color: '#fff',
+    marginTop: -8,
   },
 });
