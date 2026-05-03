@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Avatar, Card, IconButton } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
+import { Avatar, Card, IconButton, Text } from 'react-native-paper';
 import { impactHaptic } from '@/lib/haptics';
 import { getProductImageUri } from '@/lib/images/productImages';
 import { capitalize, getCategory } from '@/lib/utils';
@@ -31,11 +32,7 @@ export default function PantryCard({ product }: PantryCardProps) {
 
   // gets last category without "en:" prefix
   const category = capitalize(getCategory(product?.categories));
-
-  const subtitle =
-    [product.name ? product.brand : null, bestBeforeDate, category]
-      .filter(Boolean)
-      .join(' | ') || undefined;
+  const company = product.name ? product.brand : undefined;
 
   const handlePress = () => {
     impactHaptic();
@@ -47,15 +44,66 @@ export default function PantryCard({ product }: PantryCardProps) {
 
   return (
     <Card mode='contained' onPress={handlePress}>
-      <Card.Title
-        titleVariant='titleMedium'
-        title={title}
-        subtitle={subtitle}
-        left={({ size }) => (
-          <LeftContent imageUri={getProductImageUri(product)} size={size} />
-        )}
-        right={() => <IconButton icon={'chevron-right'} />}
-      />
+      <Card.Content style={styles.content}>
+        <View style={styles.row}>
+          <View style={styles.left}>
+            <LeftContent imageUri={getProductImageUri(product)} size={56} />
+          </View>
+
+          <View style={styles.body}>
+            {title && (
+              <Text variant='titleMedium' numberOfLines={1}>
+                {title}
+              </Text>
+            )}
+
+            {company && (
+              <Text variant='bodySmall' style={styles.meta}>
+                {company}
+              </Text>
+            )}
+
+            {category && (
+              <Text variant='bodySmall' style={styles.meta}>
+                {category}
+              </Text>
+            )}
+
+            {bestBeforeDate && (
+              <Text variant='bodySmall' style={styles.meta}>
+                {bestBeforeDate}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.right}>
+            <IconButton icon='chevron-right' />
+          </View>
+        </View>
+      </Card.Content>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    paddingVertical: 14,
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  left: {
+    marginRight: 16,
+  },
+  body: {
+    flex: 1,
+    gap: 2,
+  },
+  right: {
+    marginLeft: 8,
+  },
+  meta: {
+    opacity: 0.78,
+  },
+});
