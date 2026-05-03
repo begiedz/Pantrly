@@ -80,7 +80,10 @@ export default function ProductDetailsScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+          >
             <Card mode='contained' style={styles.card}>
               {imageUri ? (
                 <Card.Cover
@@ -121,17 +124,16 @@ export default function ProductDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    alignItems: 'center',
+  screen: {},
+  scrollView: {
+    width: '100%',
   },
   content: {
+    flexGrow: 1,
     paddingBottom: 24,
-    width: '100%',
   },
   card: {
     overflow: 'hidden',
-    alignSelf: 'center',
-    maxWidth: 720,
     width: '100%',
   },
   cover: {

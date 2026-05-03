@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Avatar, Card, IconButton } from 'react-native-paper';
-import { getProductImageUri } from '@/lib/images/productImages';
 import { impactHaptic } from '@/lib/haptics';
+import { getProductImageUri } from '@/lib/images/productImages';
 import { capitalize, getCategory } from '@/lib/utils';
 import type { ProductEntity } from '@/types';
 
@@ -22,21 +22,6 @@ const LeftContent = ({
     <Avatar.Icon icon='image-outline' size={size} />
   );
 
-const RightContent = ({ id }: { id: string }) => {
-  return (
-    <IconButton
-      icon={'chevron-right'}
-      onPress={() => {
-        impactHaptic();
-        router.push({
-          pathname: '/product/[id]',
-          params: { id },
-        });
-      }}
-    />
-  );
-};
-
 export default function PantryCard({ product }: PantryCardProps) {
   const title = product.name || product.brand;
 
@@ -52,8 +37,16 @@ export default function PantryCard({ product }: PantryCardProps) {
       .filter(Boolean)
       .join(' | ') || undefined;
 
+  const handlePress = () => {
+    impactHaptic();
+    router.push({
+      pathname: '/product/[id]',
+      params: { id: product.id },
+    });
+  };
+
   return (
-    <Card mode='contained'>
+    <Card mode='contained' onPress={handlePress}>
       <Card.Title
         titleVariant='titleMedium'
         title={title}
@@ -61,7 +54,7 @@ export default function PantryCard({ product }: PantryCardProps) {
         left={({ size }) => (
           <LeftContent imageUri={getProductImageUri(product)} size={size} />
         )}
-        right={() => <RightContent id={product.id} />}
+        right={() => <IconButton icon={'chevron-right'} />}
       />
     </Card>
   );
