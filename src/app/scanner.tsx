@@ -14,6 +14,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Button } from 'react-native-paper';
@@ -64,10 +65,23 @@ function getPreferredBackLens(lenses: string[]) {
 }
 
 export default function Scanner() {
+  const { width, height } = useWindowDimensions();
   const [permission, requestPermission] = useCameraPermissions();
   const [isImporting, setIsImporting] = useState(false);
   const [selectedLens, setSelectedLens] = useState<string>();
   const isScanningRef = useRef(false);
+  const isLandscape = width > height;
+  const horizontalPadding = width < 380 ? 16 : 24;
+  const frameWidth = Math.min(width * (isLandscape ? 0.45 : 0.72), 360);
+  const frameHeight = Math.min(height * (isLandscape ? 0.42 : 0.24), 240);
+  const sideShadeWidth = Math.max(0, (width - frameWidth) / 2);
+  const topShadeHeight = Math.max(
+    0,
+    (height - frameHeight) * (isLandscape ? 0.44 : 0.46),
+  );
+  const bottomShadeHeight = Math.max(0, height - frameHeight - topShadeHeight);
+  const cornerInset = Math.max(12, Math.min(frameWidth, frameHeight) * 0.08);
+  const cornerSize = Math.max(28, Math.min(frameWidth, frameHeight) * 0.15);
 
   const unlockScanner = useCallback(() => {
     isScanningRef.current = false;
@@ -253,7 +267,7 @@ export default function Scanner() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 24,
+          paddingHorizontal: horizontalPadding,
         }}
       >
         <Text>Loading camera permission...</Text>
@@ -278,7 +292,7 @@ export default function Scanner() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 24,
+          paddingHorizontal: horizontalPadding,
         }}
       >
         <Text>We need camera permission to scan barcodes.</Text>
@@ -318,23 +332,91 @@ export default function Scanner() {
         }}
       />
       <View pointerEvents='none' style={styles.overlay}>
-        <View style={styles.topShade}>
+        <View
+          style={[
+            styles.topShade,
+            {
+              height: topShadeHeight,
+              paddingHorizontal: horizontalPadding,
+            },
+            isLandscape && styles.topShadeLandscape,
+          ]}
+        >
           <Text style={styles.overlayTitle}>Scan barcode</Text>
           <Text style={styles.overlayHint}>
             Align the barcode inside the frame
           </Text>
         </View>
         <View style={styles.scanRow}>
-          <View style={styles.sideShade} />
-          <View style={styles.scanFrame}>
-            <View style={[styles.corner, styles.cornerTopLeft]} />
-            <View style={[styles.corner, styles.cornerTopRight]} />
-            <View style={[styles.corner, styles.cornerBottomLeft]} />
-            <View style={[styles.corner, styles.cornerBottomRight]} />
+          <View
+            style={[
+              styles.sideShade,
+              { width: sideShadeWidth, height: frameHeight },
+            ]}
+          />
+          <View
+            style={[
+              styles.scanFrame,
+              { width: frameWidth, height: frameHeight },
+            ]}
+          >
+            <View
+              style={[
+                styles.corner,
+                styles.cornerTopLeft,
+                {
+                  width: cornerSize,
+                  height: cornerSize,
+                  top: cornerInset,
+                  left: cornerInset,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.corner,
+                styles.cornerTopRight,
+                {
+                  width: cornerSize,
+                  height: cornerSize,
+                  top: cornerInset,
+                  right: cornerInset,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.corner,
+                styles.cornerBottomLeft,
+                {
+                  width: cornerSize,
+                  height: cornerSize,
+                  bottom: cornerInset,
+                  left: cornerInset,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.corner,
+                styles.cornerBottomRight,
+                {
+                  width: cornerSize,
+                  height: cornerSize,
+                  bottom: cornerInset,
+                  right: cornerInset,
+                },
+              ]}
+            />
           </View>
-          <View style={styles.sideShade} />
+          <View
+            style={[
+              styles.sideShade,
+              { width: sideShadeWidth, height: frameHeight },
+            ]}
+          />
         </View>
-        <View style={styles.bottomShade} />
+        <View style={[styles.bottomShade, { height: bottomShadeHeight }]} />
       </View>
       <View style={styles.actions}>
         {Platform.OS !== 'ios' && (
@@ -360,12 +442,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   topShade: {
-    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.52)',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingHorizontal: 24,
     paddingBottom: 28,
+  },
+  topShadeLandscape: {
+    justifyContent: 'center',
+    paddingBottom: 16,
   },
   overlayTitle: {
     color: '#fff',
@@ -383,49 +467,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sideShade: {
-    flex: 1,
-    height: 220,
     backgroundColor: 'rgba(0, 0, 0, 0.52)',
   },
   scanFrame: {
-    width: 280,
-    height: 220,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   corner: {
     position: 'absolute',
-    width: 34,
-    height: 34,
     borderColor: '#fff',
   },
   cornerTopLeft: {
-    top: 16,
-    left: 16,
     borderTopWidth: 4,
     borderLeftWidth: 4,
   },
   cornerTopRight: {
-    top: 16,
-    right: 16,
     borderTopWidth: 4,
     borderRightWidth: 4,
   },
   cornerBottomLeft: {
-    bottom: 16,
-    left: 16,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
   },
   cornerBottomRight: {
-    right: 16,
-    bottom: 16,
     borderRightWidth: 4,
     borderBottomWidth: 4,
   },
   bottomShade: {
-    flex: 1.2,
     backgroundColor: 'rgba(0, 0, 0, 0.52)',
   },
   actions: {

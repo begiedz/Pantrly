@@ -13,6 +13,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import {
@@ -47,6 +48,7 @@ import { addProduct } from '@/lib/store/appStore';
 
 export default function CreateScreen() {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{
     barcode?: string;
     name?: string;
@@ -75,6 +77,9 @@ export default function CreateScreen() {
 
   const previewImageUri = selectedImageUri ?? remoteImageUrl;
   const isScannedProduct = params.source === 'scan';
+  const isWideLayout = width >= 768;
+  const contentPadding = width < 380 ? 16 : width < 768 ? 20 : 24;
+  const imagePreviewSize = Math.min(width * (isWideLayout ? 0.22 : 0.32), 180);
   const formattedBestBefore = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -279,7 +284,7 @@ export default function CreateScreen() {
       <KeyboardAvoidingView style={styles.container}>
         <ScrollView
           automaticallyAdjustKeyboardInsets
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { padding: contentPadding }]}
         >
           <View style={styles.header}>
             <Text variant='headlineMedium'>
@@ -292,7 +297,7 @@ export default function CreateScreen() {
             </Text>
           </View>
 
-          <View style={styles.form}>
+          <View style={[styles.form, isWideLayout && styles.formWide]}>
             <TextInput
               mode='outlined'
               label='Item name'
@@ -330,7 +335,12 @@ export default function CreateScreen() {
                 </Text>
               </Pressable>
             </View>
-            <View style={styles.barcodeField}>
+            <View
+              style={[
+                styles.barcodeField,
+                !isWideLayout && styles.barcodeFieldStacked,
+              ]}
+            >
               <TextInput
                 mode='outlined'
                 label='Barcode'
@@ -344,6 +354,7 @@ export default function CreateScreen() {
                 style={styles.barcodeInput}
               />
               <Button
+                style={!isWideLayout ? styles.barcodeButton : undefined}
                 mode='outlined'
                 icon='database-search-outline'
                 onPress={() => {
@@ -381,15 +392,32 @@ export default function CreateScreen() {
               Separate categories with commas.
             </HelperText>
 
-            <View style={styles.imageField}>
+            <View
+              style={[styles.imageField, isWideLayout && styles.imageFieldWide]}
+            >
               {previewImageUri ? (
                 <Image
                   source={{ uri: previewImageUri }}
-                  style={styles.imagePreview}
+                  style={[
+                    styles.imagePreview,
+                    {
+                      width: imagePreviewSize,
+                      height: imagePreviewSize,
+                    },
+                  ]}
                   resizeMode='cover'
                 />
               ) : (
-                <View style={[styles.imagePreview, styles.imagePlaceholder]}>
+                <View
+                  style={[
+                    styles.imagePreview,
+                    styles.imagePlaceholder,
+                    {
+                      width: imagePreviewSize,
+                      height: imagePreviewSize,
+                    },
+                  ]}
+                >
                   <Text variant='bodyMedium'>No image</Text>
                 </View>
               )}
@@ -431,8 +459,11 @@ export default function CreateScreen() {
             </View>
           </View>
 
-          <View style={styles.actions}>
+          <View
+            style={[styles.actions, !isWideLayout && styles.actionsStacked]}
+          >
             <Button
+              style={!isWideLayout ? styles.actionButton : undefined}
               mode='text'
               onPress={() => {
                 impactHaptic();
@@ -442,6 +473,7 @@ export default function CreateScreen() {
               Cancel
             </Button>
             <Button
+              style={!isWideLayout ? styles.actionButton : undefined}
               mode='contained'
               onPress={() => {
                 impactHaptic();
@@ -507,21 +539,36 @@ const styles = StyleSheet.create({
   form: {
     gap: 8,
   },
+  formWide: {
+    alignSelf: 'center',
+    maxWidth: 720,
+    width: '100%',
+  },
   barcodeField: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  barcodeFieldStacked: {
+    alignItems: 'stretch',
+    flexWrap: 'wrap',
+  },
   barcodeInput: {
     flex: 1,
+    minWidth: 220,
+  },
+  barcodeButton: {
+    width: '100%',
   },
   imageField: {
     gap: 12,
     paddingTop: 8,
   },
+  imageFieldWide: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   imagePreview: {
-    width: 128,
-    height: 128,
     borderRadius: 12,
   },
   imagePlaceholder: {
@@ -581,5 +628,11 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 'auto',
     paddingBottom: 12,
+  },
+  actionsStacked: {
+    flexWrap: 'wrap-reverse',
+  },
+  actionButton: {
+    minWidth: 140,
   },
 });

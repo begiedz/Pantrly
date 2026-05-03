@@ -1,5 +1,10 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Avatar, Card, Divider, Text } from 'react-native-paper';
 
 import Screen from '@/components/screen';
@@ -34,6 +39,7 @@ function DetailRow({ label, value, isLast = false }: DetailRowProps) {
 }
 
 export default function ProductDetailsScreen() {
+  const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const product = getProductById(id);
@@ -45,6 +51,8 @@ export default function ProductDetailsScreen() {
     : undefined;
 
   const categories = normalizeCategories(product?.categories);
+  const horizontalPadding = width < 380 ? 12 : width < 768 ? 16 : 24;
+  const coverHeight = Math.min(Math.max(width * 0.55, 200), 320);
 
   const detailRows = product
     ? [
@@ -63,7 +71,7 @@ export default function ProductDetailsScreen() {
           title,
         }}
       />
-      <Screen style={styles.screen}>
+      <Screen style={[styles.screen, { padding: horizontalPadding }]}>
         {!product ? (
           <View style={styles.emptyState}>
             <Text variant='headlineSmall'>Product not found</Text>
@@ -75,9 +83,14 @@ export default function ProductDetailsScreen() {
           <ScrollView contentContainerStyle={styles.content}>
             <Card mode='contained' style={styles.card}>
               {imageUri ? (
-                <Card.Cover source={{ uri: imageUri }} style={styles.cover} />
+                <Card.Cover
+                  source={{ uri: imageUri }}
+                  style={[styles.cover, { height: coverHeight }]}
+                />
               ) : (
-                <View style={styles.coverPlaceholder}>
+                <View
+                  style={[styles.coverPlaceholder, { height: coverHeight }]}
+                >
                   <Avatar.Icon icon='image-outline' size={56} />
                 </View>
               )}
@@ -109,19 +122,22 @@ export default function ProductDetailsScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    padding: 16,
+    alignItems: 'center',
   },
   content: {
     paddingBottom: 24,
+    width: '100%',
   },
   card: {
     overflow: 'hidden',
+    alignSelf: 'center',
+    maxWidth: 720,
+    width: '100%',
   },
   cover: {
-    height: 240,
+    width: '100%',
   },
   coverPlaceholder: {
-    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
   },
