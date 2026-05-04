@@ -64,6 +64,10 @@ function getPreferredBackLens(lenses: string[]) {
   );
 }
 
+function showAlert(title: string, message: string, onPress?: () => void) {
+  Alert.alert(title, message, onPress ? [{ text: 'OK', onPress }] : undefined);
+}
+
 export default function Scanner() {
   const { width, height } = useWindowDimensions();
   const [permission, requestPermission] = useCameraPermissions();
@@ -87,96 +91,84 @@ export default function Scanner() {
     isScanningRef.current = false;
   }, []);
 
-  const navigateToCreate = useCallback(
-    ({
-      barcode,
-      name,
-      brand,
-      categories,
-      imageUrl,
-    }: {
-      barcode?: string;
-      name?: string;
-      brand?: string;
-      categories?: string[];
-      imageUrl?: string;
-    }) => {
-      successHaptic();
-      router.replace({
-        pathname: '/create',
-        params: {
-          barcode,
-          name,
-          brand,
-          categories: categories?.join(', '),
-          imageUrl,
-          source: 'scan',
-        },
-      });
-    },
-    [],
-  );
+  function navigateToCreate({
+    barcode,
+    name,
+    brand,
+    categories,
+    imageUrl,
+  }: {
+    barcode?: string;
+    name?: string;
+    brand?: string;
+    categories?: string[];
+    imageUrl?: string;
+  }) {
+    successHaptic();
+    router.replace({
+      pathname: '/create',
+      params: {
+        barcode,
+        name,
+        brand,
+        categories: categories?.join(', '),
+        imageUrl,
+        source: 'scan',
+      },
+    });
+  }
 
-  const showRequestError = useCallback(() => {
-    errorHaptic();
-    Alert.alert('Request failed', 'Could not fetch product data.', [
-      { text: 'OK', onPress: unlockScanner },
-    ]);
-  }, [unlockScanner]);
+  function showScannerError(
+    title: string,
+    message: string,
+    haptic: () => void,
+  ) {
+    haptic();
+    showAlert(title, message, unlockScanner);
+  }
 
-  const showProductNotFound = useCallback(() => {
-    warningHaptic();
-    Alert.alert('Not found', 'No product found for this barcode.', [
-      { text: 'OK', onPress: unlockScanner },
-    ]);
-  }, [unlockScanner]);
+  async function resolveScannedBarcode({
+    data,
+    type,
+  }: Pick<BarcodeScanningResult, 'data' | 'type'>) {
+    try {
+      const response = await getProductByBarcode(baseUrl, data, fields);
 
-  const showMappedProductError = useCallback(() => {
-    errorHaptic();
-    Alert.alert('Error', 'Could not map product data.', [
-      { text: 'OK', onPress: unlockScanner },
-    ]);
-  }, [unlockScanner]);
+      console.log(`Scan successful\nType: ${type}\nData: ${data}`);
+      console.log(JSON.stringify(response, null, 2));
 
-  const resolveScannedBarcode = useCallback(
-    async ({ data, type }: Pick<BarcodeScanningResult, 'data' | 'type'>) => {
-      try {
-        const response = await getProductByBarcode(baseUrl, data, fields);
-
-        console.log(`Scan successful\nType: ${type}\nData: ${data}`);
-        console.log(JSON.stringify(response, null, 2));
-
-        if (response?.status !== 1) {
-          showProductNotFound();
-          return;
-        }
-
-        const product = mapApiProductToEntity(response);
-
-        if (!product) {
-          showMappedProductError();
-          return;
-        }
-
-        navigateToCreate({
-          barcode: product.barcode,
-          name: product.name,
-          brand: product.brand,
-          categories: product.categories,
-          imageUrl: product.imageUrl,
-        });
-      } catch (error) {
-        console.error('Barcode lookup failed:', error);
-        showRequestError();
+      if (response.status !== 1) {
+        showScannerError(
+          'Not found',
+          'No product found for this barcode.',
+          warningHaptic,
+        );
+        return;
       }
-    },
-    [
-      navigateToCreate,
-      showMappedProductError,
-      showProductNotFound,
-      showRequestError,
-    ],
-  );
+
+      const product = mapApiProductToEntity(response);
+
+      if (!product) {
+        showScannerError('Error', 'Could not map product data.', errorHaptic);
+        return;
+      }
+
+      navigateToCreate({
+        barcode: product.barcode,
+        name: product.name,
+        brand: product.brand,
+        categories: product.categories,
+        imageUrl: product.imageUrl,
+      });
+    } catch (error) {
+      console.error('Barcode lookup failed:', error);
+      showScannerError(
+        'Request failed',
+        'Could not fetch product data.',
+        errorHaptic,
+      );
+    }
+  }
 
   const handleBarcodeScanned = async ({
     data,
@@ -188,7 +180,7 @@ export default function Scanner() {
     await resolveScannedBarcode({ data, type });
   };
 
-  const handleImportBarcode = useCallback(async () => {
+  async function handleImportBarcode() {
     if (isImporting) {
       return;
     }
@@ -247,7 +239,7 @@ export default function Scanner() {
     } finally {
       setIsImporting(false);
     }
-  }, [isImporting, resolveScannedBarcode]);
+  }
 
   const handleAvailableLensesChanged = useCallback(
     ({ lenses }: AvailableLenses) => {

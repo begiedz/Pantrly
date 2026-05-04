@@ -16,65 +16,39 @@ export const appStore = createStore<AppStore>({
 
 let isHydrated = false;
 
+function setProducts(products: ProductEntity[]) {
+  appStore.setState(() => ({ products }));
+  return products;
+}
+
 export async function hydrateProducts() {
   if (isHydrated) {
     return;
   }
 
-  const products = await loadPantryItems();
-
-  appStore.setState((state) => ({
-    ...state,
-    products,
-  }));
-
+  setProducts(await loadPantryItems());
   isHydrated = true;
 }
 
 export function addProduct(product: ProductEntity) {
-  let nextProducts: ProductEntity[] = [];
-
-  appStore.setState((state) => {
-    nextProducts = [...state.products, product];
-
-    return {
-      ...state,
-      products: nextProducts,
-    };
-  });
-
+  const nextProducts = setProducts([...appStore.state.products, product]);
   void savePantryItems(nextProducts);
 }
 
 export function updateProduct(product: ProductEntity) {
-  let nextProducts: ProductEntity[] = [];
-
-  appStore.setState((state) => {
-    nextProducts = state.products.map((item) =>
+  const nextProducts = setProducts(
+    appStore.state.products.map((item) =>
       item.id === product.id ? product : item,
-    );
-
-    return {
-      ...state,
-      products: nextProducts,
-    };
-  });
-
+    ),
+  );
   void savePantryItems(nextProducts);
 }
 
 export async function removeProduct(productId: string) {
   const product = getProductById(productId);
-  let nextProducts: ProductEntity[] = [];
-
-  appStore.setState((state) => {
-    nextProducts = state.products.filter((item) => item.id !== productId);
-
-    return {
-      ...state,
-      products: nextProducts,
-    };
-  });
+  const nextProducts = setProducts(
+    appStore.state.products.filter((item) => item.id !== productId),
+  );
 
   await Promise.all([
     savePantryItems(nextProducts),
@@ -85,11 +59,7 @@ export async function removeProduct(productId: string) {
 export async function clearProducts() {
   await clearPantryItems();
   await deleteProductImagesDirectory();
-
-  appStore.setState((state) => ({
-    ...state,
-    products: [],
-  }));
+  setProducts([]);
 }
 
 export function getProductById(id: string) {

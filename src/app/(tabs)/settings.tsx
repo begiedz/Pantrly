@@ -8,8 +8,7 @@ import { impactHaptic, selectionHaptic, successHaptic } from '@/lib/haptics';
 import { clearProducts } from '@/lib/store/appStore';
 
 export default function SettingsScreen() {
-  const isDev = __DEV__;
-  const version = isDev
+  const version = __DEV__
     ? 'development'
     : (Constants.expoConfig?.version ?? 'unknown');
 

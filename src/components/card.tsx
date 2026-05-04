@@ -27,13 +27,10 @@ const LeftContent = ({
 
 export default function PantryCard({ product }: PantryCardProps) {
   const title = product.name || product.brand;
-
-  const bestBeforeDate = product?.bestBefore
+  const bestBeforeDate = product.bestBefore
     ? new Date(product.bestBefore).toLocaleDateString('en-GB')
     : undefined;
-
-  // gets last category without "en:" prefix
-  const category = capitalize(getCategory(product?.categories));
+  const category = capitalize(getCategory(product.categories));
   const company = product.name ? product.brand : undefined;
 
   const handlePress = () => {

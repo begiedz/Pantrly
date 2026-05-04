@@ -17,14 +17,14 @@ import { appStore } from '@/lib/store/appStore';
 export default function PantryScreen() {
   const { width } = useWindowDimensions();
   const products = useStore(appStore, (state) => state.products);
-  const [state, setState] = useState({ open: false });
+  const [open, setOpen] = useState(false);
   const contentPadding = width < 380 ? 12 : width < 768 ? 16 : 24;
 
   const onStateChange = ({ open }: { open: boolean }) => {
     selectionHaptic();
-    setState({ open });
+    setOpen(open);
   };
-  const { open } = state;
+
   return (
     <Screen>
       <FlatList
