@@ -10,20 +10,16 @@ type HeaderProps = (NativeStackHeaderProps | BottomTabHeaderProps) & {
   back?: NativeStackHeaderProps['back'];
 };
 
-export default function Header({
-  navigation,
-  route,
-  options,
-  back,
-}: HeaderProps) {
+export default function Header({ navigation, route, options }: HeaderProps) {
   const title = getHeaderTitle(options, route.name);
+  const canGoBack = navigation.canGoBack();
   const rightAction = options.headerRight?.({
-    canGoBack: Boolean(back),
+    canGoBack,
   } as never);
 
   return (
     <Appbar.Header elevated>
-      {back ? (
+      {canGoBack ? (
         <Appbar.BackAction
           onPress={() => {
             impactHaptic();
@@ -32,7 +28,9 @@ export default function Header({
         />
       ) : null}
       <Appbar.Content title={title} />
-      {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
+      {rightAction ? (
+        <View style={styles.rightAction}>{rightAction}</View>
+      ) : null}
     </Appbar.Header>
   );
 }
