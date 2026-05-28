@@ -1,4 +1,4 @@
-const REQUEST_TIMEOUT_MS = 1;
+const REQUEST_TIMEOUT_MS = 10_000;
 
 export async function apiGet<T>(url: string): Promise<T> {
   const controller = new AbortController();
