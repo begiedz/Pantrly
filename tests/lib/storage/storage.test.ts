@@ -2,16 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
 import { loadPantryItems } from '@/lib/storage/storage';
 
-// it's mocking real AsyncStorage so all the functions from '@/lib/storage/storage' uses this mocked one
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  // __esModule and default because it is imported as default in prod
-  __esModule: true,
-  default: {
-    // these are the mocked functions
-    getItem: jest.fn(),
-  },
-}));
-
 describe('loadPantryItems', () => {
   it('returns an empty list when pantry storage has no saved items', async () => {
     // .mockResolvedValueOnce(null) returns Promise.resolve(null)
