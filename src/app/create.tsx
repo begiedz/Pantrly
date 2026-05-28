@@ -12,7 +12,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import {
@@ -43,6 +42,7 @@ import {
   deleteProductImage,
   downloadProductImageToStorage,
 } from '@/lib/images/productImages';
+import { useResponsiveLayout } from '@/lib/layout';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
 import {
   addProduct,
@@ -67,20 +67,25 @@ function parseCategories(value: string) {
   return categories.length > 0 ? categories : undefined;
 }
 
+function param(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function CreateScreen() {
   const theme = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, isWideLayout, contentPadding } = useResponsiveLayout();
   const params = useLocalSearchParams<{
-    id?: string;
-    barcode?: string;
-    name?: string;
-    brand?: string;
-    categories?: string;
-    imageUrl?: string;
-    source?: string;
+    id?: string | string[];
+    barcode?: string | string[];
+    name?: string | string[];
+    brand?: string | string[];
+    categories?: string | string[];
+    imageUrl?: string | string[];
+    source?: string | string[];
   }>();
 
-  const product = params.id ? getProductById(params.id) : undefined;
+  const productId = param(params.id);
+  const product = productId ? getProductById(productId) : undefined;
   const originalStoredImageUri = product?.localImageUri;
   const isEditing = Boolean(product);
   const initialBestBefore = product?.bestBefore
@@ -88,15 +93,15 @@ export default function CreateScreen() {
     : new Date();
 
   const [barcode, setBarcode] = useState(
-    product?.barcode ?? params.barcode ?? '',
+    product?.barcode ?? param(params.barcode) ?? '',
   );
-  const [name, setName] = useState(product?.name ?? params.name ?? '');
-  const [brand, setBrand] = useState(product?.brand ?? params.brand ?? '');
+  const [name, setName] = useState(product?.name ?? param(params.name) ?? '');
+  const [brand, setBrand] = useState(product?.brand ?? param(params.brand) ?? '');
   const [categories, setCategories] = useState(
-    product?.categories?.join(', ') ?? params.categories ?? '',
+    product?.categories?.join(', ') ?? param(params.categories) ?? '',
   );
   const [remoteImageUrl, setRemoteImageUrl] = useState(
-    product?.imageUrl ?? params.imageUrl,
+    product?.imageUrl ?? param(params.imageUrl),
   );
   const [storedImageUri, setStoredImageUri] = useState(originalStoredImageUri);
   const [selectedImageUri, setSelectedImageUri] = useState<string>();
@@ -112,9 +117,7 @@ export default function CreateScreen() {
   const trimmedCategories = categories.trim();
 
   const previewImageUri = selectedImageUri ?? storedImageUri ?? remoteImageUrl;
-  const isScannedProduct = params.source === 'scan';
-  const isWideLayout = width >= 768;
-  const contentPadding = width < 380 ? 16 : width < 768 ? 20 : 24;
+  const isScannedProduct = param(params.source) === 'scan';
   const imagePreviewSize = Math.min(width * (isWideLayout ? 0.22 : 0.32), 180);
   const screenTitle = isEditing ? 'Edit product' : 'New product';
   const headerTitle = isEditing

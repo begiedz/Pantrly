@@ -3,7 +3,6 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   ScrollView,
   StyleSheet,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
@@ -11,6 +10,7 @@ import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
 import Screen from '@/components/screen';
 import { impactHaptic } from '@/lib/haptics';
 import { getProductImageUri } from '@/lib/images/productImages';
+import { useResponsiveLayout } from '@/lib/layout';
 import { appStore } from '@/lib/store/appStore';
 import { normalizeCategories } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ function DetailRow({ label, value, isLast = false }: DetailRowProps) {
 }
 
 export default function ProductDetailsScreen() {
-  const { width } = useWindowDimensions();
+  const { width, isWideLayout, contentPadding } = useResponsiveLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const product = useStore(appStore, (state) =>
@@ -50,8 +50,6 @@ export default function ProductDetailsScreen() {
     ? normalizeCategories(product.categories)
     : undefined;
 
-  const isWideLayout = width >= 768;
-  const contentPadding = width < 380 ? 16 : width < 768 ? 20 : 24;
   const coverHeight = Math.min(Math.max(width * 0.55, 200), 320);
 
   const detailRows = product

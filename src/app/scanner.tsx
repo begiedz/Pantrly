@@ -29,6 +29,7 @@ import {
   warningHaptic,
 } from '@/lib/haptics';
 import { pickImageFromLibrary } from '@/lib/images/imagePicker';
+import { useResponsiveLayout } from '@/lib/layout';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
 
 const supportedBarcodeTypes: BarcodeType[] = [
@@ -69,13 +70,14 @@ function showAlert(title: string, message: string, onPress?: () => void) {
 }
 
 export default function Scanner() {
-  const { width, height } = useWindowDimensions();
+  const { width, contentPadding } = useResponsiveLayout();
+  const { height } = useWindowDimensions();
   const [permission, requestPermission] = useCameraPermissions();
   const [isImporting, setIsImporting] = useState(false);
   const [selectedLens, setSelectedLens] = useState<string>();
   const isScanningRef = useRef(false);
   const isLandscape = width > height;
-  const horizontalPadding = width < 380 ? 16 : 24;
+  const horizontalPadding = contentPadding;
   const frameWidth = Math.min(width * (isLandscape ? 0.45 : 0.72), 360);
   const frameHeight = Math.min(height * (isLandscape ? 0.42 : 0.24), 240);
   const sideShadeWidth = Math.max(0, (width - frameWidth) / 2);
