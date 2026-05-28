@@ -1,10 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
 
 import Screen from '@/components/screen';
@@ -38,10 +34,11 @@ function DetailRow({ label, value, isLast = false }: DetailRowProps) {
 
 export default function ProductDetailsScreen() {
   const { width, isWideLayout, contentPadding } = useResponsiveLayout();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams();
+  const id = typeof params.id === 'string' ? params.id : undefined;
 
   const product = useStore(appStore, (state) =>
-    state.products.find((item) => item.id === id),
+    id ? state.products.find((item) => item.id === id) : undefined,
   );
 
   const title = product?.name || product?.brand || 'Product Details';
@@ -94,7 +91,7 @@ export default function ProductDetailsScreen() {
       />
 
       <Screen style={[styles.screen, { paddingHorizontal: contentPadding }]}>
-        {!product ? (
+        {!id || !product ? (
           <View style={styles.emptyState}>
             <Text variant='headlineSmall'>Product not found</Text>
             <Text variant='bodyMedium' style={styles.emptyStateText}>
