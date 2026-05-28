@@ -1,4 +1,5 @@
 import * as Crypto from 'expo-crypto';
+import { normalizeCategoryList } from '@/lib/utils';
 import type { ApiProductResponse, ProductEntity } from '@/types';
 
 export default function mapApiProductToEntity(
@@ -13,7 +14,7 @@ export default function mapApiProductToEntity(
     barcode: response.code,
     name: response.product.product_name,
     brand: response.product.brands,
-    categories: response.product.categories_tags ?? [],
+    categories: normalizeCategoryList(response.product.categories_tags) ?? [],
     imageUrl: response.product.image_front_url,
   };
 }
