@@ -1,8 +1,10 @@
+import { clearPantryItems } from '@/lib/storage/storage';
 import type { ProductEntity } from '@/types';
 
 jest.mock('@/lib/storage/storage', () => ({
   savePantryItems: jest.fn(),
   loadPantryItems: jest.fn(),
+  clearPantryItems: jest.fn(),
 }));
 
 // mocking the storage - it's dependancy for appStore, appStore is not mocked due to it is actual tested module
@@ -50,5 +52,28 @@ describe('appStore', () => {
     expect(storeModule.appStore.state.products).toEqual(storedProducts);
   });
 
-  // it('clears pantry items', () => {});
+  it('clears pantry items in store', async () => {
+    const storedProducts: ProductEntity[] = [
+      {
+        id: '1',
+        name: 'Milk',
+      },
+      {
+        id: '2',
+        name: 'Bread',
+      },
+    ];
+
+    const storage = require('@/lib/storage/storage');
+    const storeModule = require('@/lib/store/appStore');
+
+    storeModule.appStore.setState(() => ({
+      products: [storedProducts],
+    }));
+
+    await storeModule.clearProducts();
+
+    expect(storeModule.appStore.state.products).toEqual([]);
+    expect(storage.clearPantryItems).toHaveBeenCalledTimes(1);
+  });
 });
