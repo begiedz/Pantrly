@@ -28,9 +28,27 @@ describe('appStore', () => {
       storeModule.addProduct(newProduct);
 
       expect(storeModule.appStore.state.products).toEqual([newProduct]);
+      expect(storage.savePantryItems).toHaveBeenCalledTimes(1);
       expect(storage.savePantryItems).toHaveBeenCalledWith([newProduct]);
     });
   });
-  // it('load pantry items', () => {});
+
+  it('loads pantry items and stores them in store', async () => {
+    const storedProducts: ProductEntity[] = [
+      {
+        id: '1',
+        name: 'Milk',
+      },
+    ];
+    const storage = require('@/lib/storage/storage');
+    const storeModule = require('@/lib/store/appStore');
+
+    storage.loadPantryItems.mockResolvedValue(storedProducts);
+    await storeModule.hydrateProducts();
+
+    expect(storage.loadPantryItems).toHaveBeenCalledTimes(1);
+    expect(storeModule.appStore.state.products).toEqual(storedProducts);
+  });
+
   // it('clears pantry items', () => {});
 });
