@@ -49,6 +49,7 @@ function getPreferredBackLens(lenses: string[]) {
   }));
 
   return (
+    // prefer the standard back lens first so barcode framing stays predictable across devices instead of jumping to ultra-wide or selfie cameras
     normalizedLenses.find(({ normalized }) => normalized === 'back camera')
       ?.original ??
     normalizedLenses.find(
@@ -176,6 +177,7 @@ export default function Scanner() {
     data,
     type,
   }: BarcodeScanningResult) => {
+    // camera callbacks can fire many times for the same code, so we lock the scanner until the lookup finishes to avoid duplicate navigation
     if (isScanningRef.current) return;
 
     isScanningRef.current = true;
@@ -191,6 +193,7 @@ export default function Scanner() {
 
     try {
       if (Platform.OS === 'ios') {
+        // ios gallery scanning is limited here because expo reliably supports qr import, but not the product barcode formats used for pantry lookup
         warningHaptic();
         Alert.alert(
           'Limited on iPhone',
@@ -247,6 +250,7 @@ export default function Scanner() {
     ({ lenses }: AvailableLenses) => {
       const preferredLens = getPreferredBackLens(lenses);
 
+      // only switch when the preferred lens changes so the preview does not jump around on every callback from devices that report lenses repeatedly
       setSelectedLens((currentLens) =>
         currentLens === preferredLens ? currentLens : preferredLens,
       );

@@ -28,6 +28,7 @@ export async function hydrateProducts() {
   }
 
   if (!hydratingPromise) {
+    // share one hydration promise so multiple screens can request startup data without racing each other or overwriting state with duplicate reads
     hydratingPromise = (async () => {
       setProducts(await loadPantryItems());
       isHydrated = true;
@@ -39,6 +40,7 @@ export async function hydrateProducts() {
 
 export function addProduct(product: ProductEntity) {
   const nextProducts = setProducts([...appStore.state.products, product]);
+  // persist after the in-memory update so the ui stays responsive and storage failures do not block the add flow
   void savePantryItems(nextProducts);
 }
 
@@ -48,6 +50,7 @@ export function updateProduct(product: ProductEntity) {
       item.id === product.id ? product : item,
     ),
   );
+  // updates follow the same pattern as add: state first for instant feedback, storage second because the app can handle a delayed write
   void savePantryItems(nextProducts);
 }
 

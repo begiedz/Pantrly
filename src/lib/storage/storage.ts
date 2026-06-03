@@ -13,6 +13,7 @@ export async function loadPantryItems(): Promise<ProductEntity[]> {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as ProductEntity[]) : [];
   } catch (error) {
+    // treat corrupt or unreadable storage as an empty pantry so the app can boot into a recoverable state instead of crashing on startup
     console.error('Failed to read pantry items', error);
     return [];
   }

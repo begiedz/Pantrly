@@ -192,6 +192,7 @@ export default function CreateScreen() {
       const uri = await action();
 
       if (uri) {
+        // keep the latest picked image in local state first so save stays the single place that decides how temporary images become saved data
         setSelectedImageUri(uri);
       }
     } catch (error) {
@@ -275,15 +276,18 @@ export default function CreateScreen() {
       let localImageUri = storedImageUri;
 
       if (!previewImageUri && originalStoredImageUri) {
+        // remove the old file when a user clears the image so old cache files do not build up after repeated edits
         await deleteProductImage(originalStoredImageUri);
         localImageUri = undefined;
       } else if (selectedImageUri) {
         if (originalStoredImageUri) {
+          // replace the previous cached image before copying the new one so the detail screen always points to one local image
           await deleteProductImage(originalStoredImageUri);
         }
 
         localImageUri = await copyProductImageToStorage(selectedImageUri, id);
       } else if (!storedImageUri && remoteImageUrl) {
+        // copy scanned api images into app storage so product details still work if the remote image disappears or the device is offline later
         localImageUri = await downloadProductImageToStorage(remoteImageUrl, id);
       }
 

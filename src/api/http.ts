@@ -2,11 +2,14 @@ const REQUEST_TIMEOUT_MS = 10_000;
 
 export async function apiGet<T>(url: string): Promise<T> {
   const controller = new AbortController();
+  // limited request time so scanner and barcode fill flows can recover instead of leaving the ui waiting forever on a slow or stalled network call
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
       headers: {
+        // open food facts accepts the anonymous "off:off" credential pattern
+        // sending it keeps requests compatible with their api rules
         Authorization: `Basic ${btoa('off:off')}`,
       },
       signal: controller.signal,
