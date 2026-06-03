@@ -12,13 +12,15 @@ function formatCategoryLabel(category: string) {
   return formatted;
 }
 
-export function normalizeCategories(categories?: string[]) {
+export function normalizeCategoryList(categories?: string[]) {
   if (!categories) return undefined;
 
-  const normalized = categories
-    .map(formatCategoryLabel)
-    .filter(Boolean)
-    .join(', ');
+  const normalized = categories.map(formatCategoryLabel).filter(Boolean);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+export function normalizeCategories(categories?: string[]) {
+  const normalized = normalizeCategoryList(categories)?.join(', ');
 
   return normalized || undefined;
 }

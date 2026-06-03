@@ -12,19 +12,19 @@ import { FAB, Text } from 'react-native-paper';
 import Card from '@/components/card';
 import Screen from '@/components/screen';
 import { impactHaptic, selectionHaptic } from '@/lib/haptics';
+import { useResponsiveLayout } from '@/lib/layout';
 import { appStore } from '@/lib/store/appStore';
 
 export default function PantryScreen() {
-  const { width } = useWindowDimensions();
+  const { contentPadding } = useResponsiveLayout();
   const products = useStore(appStore, (state) => state.products);
-  const [state, setState] = useState({ open: false });
-  const contentPadding = width < 380 ? 12 : width < 768 ? 16 : 24;
+  const [open, setOpen] = useState(false);
 
   const onStateChange = ({ open }: { open: boolean }) => {
     selectionHaptic();
-    setState({ open });
+    setOpen(open);
   };
-  const { open } = state;
+
   return (
     <Screen>
       <FlatList

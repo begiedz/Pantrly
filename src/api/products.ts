@@ -6,7 +6,7 @@ export async function getProductByBarcode(
   barcode: string,
   fields?: string,
 ): Promise<ApiProductResponse> {
-  const endpoint = new URL(`${url}/${barcode}`);
+  const endpoint = new URL(`${url}/${encodeURIComponent(barcode)}`);
 
   if (fields) {
     endpoint.searchParams.set('fields', fields);

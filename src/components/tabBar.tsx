@@ -22,12 +22,14 @@ export default function TabBar({
 
         if (event.defaultPrevented) {
           preventDefault();
-        } else {
-          if (!isFocused) {
-            softHaptic();
-          }
-          navigation.navigate(route.name, route.params);
+          return;
         }
+
+        if (!isFocused) {
+          softHaptic();
+        }
+
+        navigation.navigate(route.name, route.params);
       }}
       renderIcon={({ route, focused, color }) => {
         const { options } = descriptors[route.key];
@@ -49,11 +51,7 @@ export default function TabBar({
           return options.tabBarLabel;
         }
 
-        if (typeof options.title === 'string') {
-          return options.title;
-        }
-
-        return route.name;
+        return typeof options.title === 'string' ? options.title : route.name;
       }}
     />
   );

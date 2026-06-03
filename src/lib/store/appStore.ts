@@ -15,66 +15,50 @@ export const appStore = createStore<AppStore>({
 });
 
 let isHydrated = false;
+let hydratingPromise: Promise<void> | null = null;
+
+function setProducts(products: ProductEntity[]) {
+  appStore.setState(() => ({ products }));
+  return products;
+}
 
 export async function hydrateProducts() {
   if (isHydrated) {
     return;
   }
 
-  const products = await loadPantryItems();
+  if (!hydratingPromise) {
+    // share one hydration promise so multiple screens can request startup data without racing each other or overwriting state with duplicate reads
+    hydratingPromise = (async () => {
+      setProducts(await loadPantryItems());
+      isHydrated = true;
+    })();
+  }
 
-  appStore.setState((state) => ({
-    ...state,
-    products,
-  }));
-
-  isHydrated = true;
+  return hydratingPromise;
 }
 
 export function addProduct(product: ProductEntity) {
-  let nextProducts: ProductEntity[] = [];
-
-  appStore.setState((state) => {
-    nextProducts = [...state.products, product];
-
-    return {
-      ...state,
-      products: nextProducts,
-    };
-  });
-
+  const nextProducts = setProducts([...appStore.state.products, product]);
+  // persist after the in-memory update so the ui stays responsive and storage failures do not block the add flow
   void savePantryItems(nextProducts);
 }
 
 export function updateProduct(product: ProductEntity) {
-  let nextProducts: ProductEntity[] = [];
-
-  appStore.setState((state) => {
-    nextProducts = state.products.map((item) =>
+  const nextProducts = setProducts(
+    appStore.state.products.map(item =>
       item.id === product.id ? product : item,
-    );
-
-    return {
-      ...state,
-      products: nextProducts,
-    };
-  });
-
+    ),
+  );
+  // updates follow the same pattern as add: state first for instant feedback, storage second because the app can handle a delayed write
   void savePantryItems(nextProducts);
 }
 
 export async function removeProduct(productId: string) {
   const product = getProductById(productId);
-  let nextProducts: ProductEntity[] = [];
-
-  appStore.setState((state) => {
-    nextProducts = state.products.filter((item) => item.id !== productId);
-
-    return {
-      ...state,
-      products: nextProducts,
-    };
-  });
+  const nextProducts = setProducts(
+    appStore.state.products.filter(item => item.id !== productId),
+  );
 
   await Promise.all([
     savePantryItems(nextProducts),
@@ -85,13 +69,9 @@ export async function removeProduct(productId: string) {
 export async function clearProducts() {
   await clearPantryItems();
   await deleteProductImagesDirectory();
-
-  appStore.setState((state) => ({
-    ...state,
-    products: [],
-  }));
+  setProducts([]);
 }
 
 export function getProductById(id: string) {
-  return appStore.state.products.find((p) => p.id === id);
+  return appStore.state.products.find(p => p.id === id);
 }

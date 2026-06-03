@@ -3,17 +3,15 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as Crypto from 'expo-crypto';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import {
   Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import {
@@ -44,43 +42,66 @@ import {
   deleteProductImage,
   downloadProductImageToStorage,
 } from '@/lib/images/productImages';
+import { useResponsiveLayout } from '@/lib/layout';
 import mapApiProductToEntity from '@/lib/mappers/productMapper';
-import { addProduct, getProductById, updateProduct } from '@/lib/store/appStore';
+import {
+  addProduct,
+  getProductById,
+  updateProduct,
+} from '@/lib/store/appStore';
+
+function formatBestBefore(date: Date) {
+  return new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
+function parseCategories(value: string) {
+  const categories = value
+    .split(',')
+    .map((category) => category.trim())
+    .filter(Boolean);
+
+  return categories.length > 0 ? categories : undefined;
+}
+
+function param(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default function CreateScreen() {
   const theme = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, isWideLayout, contentPadding } = useResponsiveLayout();
   const params = useLocalSearchParams<{
-    id?: string;
-    barcode?: string;
-    name?: string;
-    brand?: string;
-    categories?: string;
-    imageUrl?: string;
-    source?: string;
+    id?: string | string[];
+    barcode?: string | string[];
+    name?: string | string[];
+    brand?: string | string[];
+    categories?: string | string[];
+    imageUrl?: string | string[];
+    source?: string | string[];
   }>();
-  const existingProduct = params.id ? getProductById(params.id) : undefined;
-  const originalStoredImageUri = existingProduct?.localImageUri;
-  const isEditing = Boolean(existingProduct);
-  const initialBestBefore = useMemo(
-    () =>
-      existingProduct?.bestBefore
-        ? new Date(existingProduct.bestBefore)
-        : new Date(),
-    [existingProduct?.bestBefore],
-  );
+
+  const productId = param(params.id);
+  const product = productId ? getProductById(productId) : undefined;
+  const originalStoredImageUri = product?.localImageUri;
+  const isEditing = Boolean(product);
+  const initialBestBefore = product?.bestBefore
+    ? new Date(product.bestBefore)
+    : new Date();
+
   const [barcode, setBarcode] = useState(
-    existingProduct?.barcode ?? params.barcode ?? '',
+    product?.barcode ?? param(params.barcode) ?? '',
   );
-  const [name, setName] = useState(existingProduct?.name ?? params.name ?? '');
-  const [brand, setBrand] = useState(
-    existingProduct?.brand ?? params.brand ?? '',
-  );
+  const [name, setName] = useState(product?.name ?? param(params.name) ?? '');
+  const [brand, setBrand] = useState(product?.brand ?? param(params.brand) ?? '');
   const [categories, setCategories] = useState(
-    existingProduct?.categories?.join(', ') ?? params.categories ?? '',
+    product?.categories?.join(', ') ?? param(params.categories) ?? '',
   );
   const [remoteImageUrl, setRemoteImageUrl] = useState(
-    existingProduct?.imageUrl ?? params.imageUrl,
+    product?.imageUrl ?? param(params.imageUrl),
   );
   const [storedImageUri, setStoredImageUri] = useState(originalStoredImageUri);
   const [selectedImageUri, setSelectedImageUri] = useState<string>();
@@ -96,9 +117,7 @@ export default function CreateScreen() {
   const trimmedCategories = categories.trim();
 
   const previewImageUri = selectedImageUri ?? storedImageUri ?? remoteImageUrl;
-  const isScannedProduct = params.source === 'scan';
-  const isWideLayout = width >= 768;
-  const contentPadding = width < 380 ? 16 : width < 768 ? 20 : 24;
+  const isScannedProduct = param(params.source) === 'scan';
   const imagePreviewSize = Math.min(width * (isWideLayout ? 0.22 : 0.32), 180);
   const screenTitle = isEditing ? 'Edit product' : 'New product';
   const headerTitle = isEditing
@@ -106,39 +125,28 @@ export default function CreateScreen() {
     : isScannedProduct
       ? 'Check the scanned item details, then set its best before date.'
       : 'Enter an item information and store its best before date.';
-  const formattedBestBefore = useMemo(
-    () =>
-      new Intl.DateTimeFormat(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }).format(bestBefore),
-    [bestBefore],
-  );
+  const formattedBestBefore = formatBestBefore(bestBefore);
 
-  const handleDateChange = (
-    event: DateTimePickerEvent,
-    selectedDate?: Date,
-  ) => {
+  function handleDateChange(event: DateTimePickerEvent, selectedDate?: Date) {
     if (event.type !== 'set' || !selectedDate) {
       return;
     }
 
     setBestBefore(selectedDate);
-  };
+  }
 
-  const handleIosDateChange = (
+  function handleIosDateChange(
     event: DateTimePickerEvent,
     selectedDate?: Date,
-  ) => {
+  ) {
     if (event.type !== 'set' || !selectedDate) {
       return;
     }
 
     setIosPickerDate(selectedDate);
-  };
+  }
 
-  const handleOpenDatePicker = () => {
+  function handleOpenDatePicker() {
     impactHaptic();
 
     if (Platform.OS === 'android') {
@@ -153,69 +161,70 @@ export default function CreateScreen() {
 
     setIosPickerDate(bestBefore);
     setIsIosDatePickerVisible(true);
-  };
+  }
 
-  const handleCloseIosDatePicker = () => {
+  function handleCloseIosDatePicker() {
     setIsIosDatePickerVisible(false);
-  };
+  }
 
-  const handleConfirmIosDatePicker = () => {
+  function handleConfirmIosDatePicker() {
     setBestBefore(iosPickerDate);
     setIsIosDatePickerVisible(false);
-  };
+  }
 
-  const handleChoosePhoto = async () => {
+  function fillProductFields(
+    nextProduct: NonNullable<ReturnType<typeof mapApiProductToEntity>>,
+  ) {
+    setName(nextProduct.name ?? '');
+    setBrand(nextProduct.brand ?? '');
+    setCategories(nextProduct.categories?.join(', ') ?? '');
+    setRemoteImageUrl(nextProduct.imageUrl);
+  }
+
+  async function handleImageSelection(
+    action: () => Promise<string | undefined>,
+    permissionError: 'PHOTO_PERMISSION_DENIED' | 'CAMERA_PERMISSION_DENIED',
+    permissionMessage: string,
+    failureTitle: string,
+    failureMessage: string,
+  ) {
     try {
-      const uri = await pickImageFromLibrary();
+      const uri = await action();
 
-      if (!uri) {
-        return;
+      if (uri) {
+        // keep the latest picked image in local state first so save stays the single place that decides how temporary images become saved data
+        setSelectedImageUri(uri);
       }
-
-      setSelectedImageUri(uri);
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === 'PHOTO_PERMISSION_DENIED'
-      ) {
+      if (error instanceof Error && error.message === permissionError) {
         warningHaptic();
-        Alert.alert(
-          'Permission needed',
-          'Allow photo access to attach an image to this item.',
-        );
+        Alert.alert('Permission needed', permissionMessage);
         return;
       }
 
       errorHaptic();
-      Alert.alert('Image failed', 'Could not open the photo library.');
+      Alert.alert(failureTitle, failureMessage);
     }
+  }
+
+  const handleChoosePhoto = async () => {
+    await handleImageSelection(
+      pickImageFromLibrary,
+      'PHOTO_PERMISSION_DENIED',
+      'Allow photo access to attach an image to this item.',
+      'Image failed',
+      'Could not open the photo library.',
+    );
   };
 
   const handleTakePhoto = async () => {
-    try {
-      const uri = await takeImageWithCamera();
-
-      if (!uri) {
-        return;
-      }
-
-      setSelectedImageUri(uri);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === 'CAMERA_PERMISSION_DENIED'
-      ) {
-        warningHaptic();
-        Alert.alert(
-          'Permission needed',
-          'Allow camera access to take a product photo.',
-        );
-        return;
-      }
-
-      errorHaptic();
-      Alert.alert('Camera failed', 'Could not take a photo.');
-    }
+    await handleImageSelection(
+      takeImageWithCamera,
+      'CAMERA_PERMISSION_DENIED',
+      'Allow camera access to take a product photo.',
+      'Camera failed',
+      'Could not take a photo.',
+    );
   };
 
   const handleFetchByBarcode = async () => {
@@ -241,10 +250,7 @@ export default function CreateScreen() {
         return;
       }
 
-      setName(product.name ?? '');
-      setBrand(product.brand ?? '');
-      setCategories(product.categories?.join(', ') ?? '');
-      setRemoteImageUrl(product.imageUrl);
+      fillProductFields(product);
       successHaptic();
       Alert.alert('Product found', 'Filled the item details from barcode.');
     } catch (error) {
@@ -266,45 +272,44 @@ export default function CreateScreen() {
     setIsSaving(true);
 
     try {
-      const id = existingProduct?.id ?? Crypto.randomUUID();
+      const id = product?.id ?? Crypto.randomUUID();
       let localImageUri = storedImageUri;
 
       if (!previewImageUri && originalStoredImageUri) {
+        // remove the old file when a user clears the image so old cache files do not build up after repeated edits
         await deleteProductImage(originalStoredImageUri);
         localImageUri = undefined;
       } else if (selectedImageUri) {
         if (originalStoredImageUri) {
+          // replace the previous cached image before copying the new one so the detail screen always points to one local image
           await deleteProductImage(originalStoredImageUri);
         }
 
         localImageUri = await copyProductImageToStorage(selectedImageUri, id);
       } else if (!storedImageUri && remoteImageUrl) {
+        // copy scanned api images into app storage so product details still work if the remote image disappears or the device is offline later
         localImageUri = await downloadProductImageToStorage(remoteImageUrl, id);
       }
 
-      const product = {
+      const nextProduct = {
         id,
         barcode: trimmedBarcode || undefined,
         name: trimmedName,
         brand: trimmedBrand || undefined,
-        categories: trimmedCategories
-          ? trimmedCategories
-              .split(',')
-              .map((category) => category.trim())
-              .filter(Boolean)
-          : undefined,
+        categories: parseCategories(trimmedCategories),
         imageUrl: remoteImageUrl || undefined,
         localImageUri,
         bestBefore: bestBefore.toISOString(),
       };
 
       if (isEditing) {
-        updateProduct(product);
+        updateProduct(nextProduct);
       } else {
-        addProduct(product);
+        addProduct(nextProduct);
       }
 
       successHaptic();
+
       if (isEditing) {
         router.back();
       } else {
@@ -331,12 +336,13 @@ export default function CreateScreen() {
           title: screenTitle,
         }}
       />
+
       <KeyboardAvoidingView style={styles.container}>
         <ScrollView
           automaticallyAdjustKeyboardInsets
           contentContainerStyle={[styles.content, { padding: contentPadding }]}
         >
-          <View style={styles.header}>
+          <View style={[styles.header, isWideLayout && styles.headerWide]}>
             <Text variant='headlineMedium'>
               {isEditing
                 ? 'Edit pantry item'
@@ -344,6 +350,7 @@ export default function CreateScreen() {
                   ? 'Review scanned item'
                   : 'Add pantry item'}
             </Text>
+
             <Text variant='bodySmall' style={styles.subtleText}>
               {headerTitle}
             </Text>
@@ -361,38 +368,22 @@ export default function CreateScreen() {
               error={trimmedName.length === 0 && name.length > 0}
             />
 
-            <View>
-              <Text variant='bodySmall' style={styles.dateLabel}>
-                Best before
-              </Text>
+            <TextInput
+              mode='outlined'
+              label='Best before'
+              value={formattedBestBefore}
+              editable={false}
+              showSoftInputOnFocus={false}
+              right={
+                <TextInput.Icon
+                  icon='calendar'
+                  onPress={handleOpenDatePicker}
+                />
+              }
+              onPressIn={handleOpenDatePicker}
+            />
 
-              <Pressable
-                onPress={handleOpenDatePicker}
-                style={styles.dateTrigger}
-              >
-                <View>
-                  <Text variant='labelMedium' style={styles.dateTriggerLabel}>
-                    Selected date
-                  </Text>
-                  <Text variant='titleMedium'>{formattedBestBefore}</Text>
-                </View>
-                <Text
-                  variant='bodyMedium'
-                  style={[
-                    styles.dateTriggerAction,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  Change
-                </Text>
-              </Pressable>
-            </View>
-            <View
-              style={[
-                styles.barcodeField,
-                !isWideLayout && styles.barcodeFieldStacked,
-              ]}
-            >
+            <View style={styles.barcodeField}>
               <TextInput
                 mode='outlined'
                 label='Barcode'
@@ -405,8 +396,9 @@ export default function CreateScreen() {
                 returnKeyType='next'
                 style={styles.barcodeInput}
               />
+
               <Button
-                style={!isWideLayout ? styles.barcodeButton : undefined}
+                style={styles.barcodeButton}
                 mode='outlined'
                 icon='database-search-outline'
                 onPress={() => {
@@ -440,6 +432,7 @@ export default function CreateScreen() {
               autoCorrect={false}
               returnKeyType='next'
             />
+
             <HelperText type='info'>
               Separate categories with commas.
             </HelperText>
@@ -485,6 +478,7 @@ export default function CreateScreen() {
                 >
                   Take photo
                 </Button>
+
                 <Button
                   mode='outlined'
                   icon='image'
@@ -495,6 +489,7 @@ export default function CreateScreen() {
                 >
                   Choose photo
                 </Button>
+
                 {previewImageUri ? (
                   <Button
                     mode='text'
@@ -525,6 +520,7 @@ export default function CreateScreen() {
             >
               Cancel
             </Button>
+
             <Button
               style={!isWideLayout ? styles.actionButton : undefined}
               mode='contained'
@@ -539,6 +535,7 @@ export default function CreateScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
       {Platform.OS === 'ios' ? (
         <Portal>
           <Modal
@@ -550,6 +547,7 @@ export default function CreateScreen() {
             ]}
           >
             <Text variant='titleMedium'>Best before</Text>
+
             <View style={styles.iosDatePickerContainer}>
               <DateTimePicker
                 value={iosPickerDate}
@@ -558,10 +556,12 @@ export default function CreateScreen() {
                 onChange={handleIosDateChange}
               />
             </View>
+
             <View style={styles.iosDateModalActions}>
               <Button mode='text' onPress={handleCloseIosDatePicker}>
                 Cancel
               </Button>
+
               <Button mode='contained' onPress={handleConfirmIosDatePicker}>
                 Done
               </Button>
@@ -586,6 +586,11 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingTop: 8,
   },
+  headerWide: {
+    alignSelf: 'center',
+    maxWidth: 720,
+    width: '100%',
+  },
   subtleText: {
     opacity: 0.7,
   },
@@ -599,20 +604,19 @@ const styles = StyleSheet.create({
   },
   barcodeField: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  barcodeFieldStacked: {
     alignItems: 'stretch',
-    flexWrap: 'wrap',
+    gap: 8,
   },
   barcodeInput: {
     flex: 1,
-    minWidth: 220,
+    minWidth: 0,
   },
   barcodeButton: {
-    width: '100%',
+    alignSelf: 'center',
+    flexShrink: 0,
+    justifyContent: 'center',
   },
+
   imageField: {
     gap: 12,
     paddingTop: 8,
@@ -634,30 +638,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  dateLabel: {
-    marginBottom: 6,
-    opacity: 0.7,
-    paddingHorizontal: 12,
-  },
-  dateTrigger: {
-    alignItems: 'center',
-    borderColor: '#cbd5e1',
-    borderRadius: 4,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 64,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-
-  dateTriggerLabel: {
-    marginBottom: 4,
-    opacity: 0.6,
-  },
-  dateTriggerAction: {
-    fontWeight: '600',
   },
   iosDatePickerContainer: {
     alignItems: 'center',
