@@ -26,7 +26,8 @@
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA"
-      ]
+      ],
+      "package": "com.begiedz.Pantrly"
     },
     "web": {
       "bundler": "metro",
