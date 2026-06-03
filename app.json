@@ -2,7 +2,7 @@
   "expo": {
     "name": "Pantrly",
     "slug": "Pantrly",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "default",
     "icon": "./src/assets/images/icon.png",
     "scheme": "pantrly",
@@ -22,7 +22,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -48,6 +52,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "34fe50cd-c51b-4ca2-907a-e3f07bf9fddb"
+      }
     }
   }
 }
