@@ -1,73 +1,122 @@
-# Minimal Template
+# Pantrly
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
+Pantrly is an React Native pantry tracker that helps you add food items quickly, store their best-before dates, and keep a lightweight offline pantry on your device. The main flow is built around barcode scanning, but the app also supports manual entry and photo attachments for products that are not recognized automatically.
 
-It was initialized using the following command:
+## What the app does
 
-```bash
-npx @react-native-reusables/cli@latest init -t Pantrly
+- Scans product barcodes with the device camera.
+- Imports a barcode from an existing photo. (Android only)
+- Looks up product metadata from the Open Food Facts API.
+- Prefills item name, brand, categories, and image after a successful scan.
+- Lets the user add pantry items manually when a barcode is missing or not found.
+- Stores pantry items locally with AsyncStorage so the list persists between app launches.
+- Supports editing existing items, changing dates, and clearing the pantry from settings.
+- Caches selected product images locally for a more reliable offline detail view.
+
+## Demo
+
+### Scan flow
+
+<img src="docs/assets/scan-flow.gif" alt="Scan flow" width="200" />
+
+### Edit flow
+
+<img src="docs/assets/edit-flow.gif" alt="Edit flow" width="200" />
+
+### Fetch product by barcode
+
+<img src="docs/assets/fetch-product-by-barcode.gif" alt="Fetch product by barcode" width="200" />
+
+### Add product manually
+
+<img src="docs/assets/add-product-manually.gif" alt="Add product manually" width="200" />
+
+## Tech stack
+
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+- React Native Paper
+- TanStack React Store
+- Jest + Testing Library
+- Open Food Facts API for barcode/product lookup
+
+## Project structure
+
+```text
+src/
+  app/                Expo Router screens
+  components/         Reusable UI building blocks
+  api/                HTTP and product lookup helpers
+  lib/store/          Pantry state management
+  lib/storage/        AsyncStorage persistence
+  lib/images/         Image picking and local image caching
+  config/             API base URL and requested product fields
+tests/                Unit and screen tests
 ```
 
-## Getting Started
+## How to run?
 
-To run the development server:
+### Prerequisites
 
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
+- Node.js 20+
+- `pnpm` installed globally
+- One of:
+  - Expo Go on a physical device
+  - Android Studio emulator
+  - Xcode simulator on macOS
 
-This will start the Expo Dev Server. Open the app in:
-
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
-
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
-
-## Adding components
-
-You can add more reusable components using the CLI:
+### Quick start
 
 ```bash
-npx react-native-reusables/cli@latest add [...components]
+pnpm install
+pnpm dev
 ```
 
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
+Then:
 
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
+- Press `a` to open Android.
+- Press `i` to open iOS on macOS.
+- Or scan the QR code with Expo Go.
 
-## Project Features
+No `.env` file or local secret setup is required.
 
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
+## Available scripts
 
-## Learn More
+```bash
+pnpm dev      # start Expo dev server and clear cache
+pnpm android  # open Android via Expo
+pnpm ios      # open iOS via Expo
+pnpm web      # run the web target
+pnpm test     # run Jest tests
+pnpm clean    # remove .expo and node_modules
+```
 
-To dive deeper into the technologies used:
+## Product flow
 
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
+1. The pantry tab lists stored items and exposes the two primary entry points: manual creation and scan.
+2. The scanner screen reads barcodes with `expo-camera` and queries Open Food Facts.
+3. The create screen lets the user review or complete metadata, set the best-before date, and attach an image.
+4. The store persists pantry items with AsyncStorage and keeps image files available locally when possible.
+5. The detail screen shows the saved item and links back into edit mode.
 
-## Deploy with EAS
+## Permissions used
 
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
+- Camera: required for live barcode scanning and taking item photos.
+- Photo library: required to import a barcode image or attach an existing product photo.
 
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+These permissions are already configured in `app.json`.
 
----
+## API integration
 
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+Pantrly currently fetches product data from Open Food Facts:
+
+- Base URL: `https://world.openfoodfacts.org/api/v2/product`
+- Requested fields: barcode, product name, brands, category tags, front image, and comparison category data
+
+The lookup flow is implemented in:
+
+- `src/api/products.ts`
+- `src/api/http.ts`
+- `src/lib/mappers/productMapper.ts`
